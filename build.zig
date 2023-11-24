@@ -72,9 +72,20 @@ pub fn build(b: *std.Build) !void {
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+    const test_target = std.zig.CrossTarget{
+        // .cpu_arch = std.Target.Cpu.Arch.arm,
+        // .os_tag = std.Target.Os.Tag.freestanding,
+        // .abi = std.Target.Abi.none,
+        // .cpu_arch = .x86,
+        // .os_tag = .linux,
+        // .abi = .eabi,
+        // .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
+        .ofmt = .elf,
+    };
+
     const unit_tests = b.addTest(.{
         .root_source_file = .{ .path = "src/main.zig" },
-        .target = target,
+        .target = test_target,
         .optimize = optimize,
     });
 
