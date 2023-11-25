@@ -51,12 +51,11 @@ pub fn GPIO_BRR(port_id: usize) *volatile usize {
 pub fn GPIO_ASCR(port_id: usize) *volatile usize {
     return @as(*volatile usize, @ptrFromInt(addGPIOX(port_id, 0x2C)));
 } // GPIO port analog switch control register */
-//
 
-pub fn read(port_addr: *volatile usize) usize {
+pub inline fn read(port_addr: *volatile usize) usize {
     return port_addr.*;
 }
 
-pub fn write(port_addr: *volatile usize, data: usize) void {
+pub inline fn write(port_addr: *volatile usize, data: usize) void {
     port_addr.* = data;
 }
