@@ -21,7 +21,9 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     // const tstd = b.createModule(.{ .source_file = .{ .path = "kernel/tstdlib/tstdlib.zig" } });
-    // const config = b.createModule(.{ .source_file = .{ .path = "config/config.zig" } });
+    const config = b.createModule(.{ .source_file = .{ .path = "src/config/config.zig" } });
+    const utils = b.createModule(.{ .source_file = .{ .path = "src/lib/utils.zig" } });
+    const devices = b.createModule(.{ .source_file = .{ .path = "src/devices/devices.zig" } });
     // const inc_sys = b.createModule(.{ .source_file = .{ .path = "include/sys.zig" } });
     // const libtk = b.createModule(.{ .source_file = .{ .path = "lib/libtk.zig" } });
     // const inc_tk = b.createModule(.{ .source_file = .{ .path = "include/tk.zig" } });
@@ -31,8 +33,15 @@ pub fn build(b: *std.Build) !void {
     // try tstd.dependencies.put("tstd", tstd);
     // exe.addModule("tstd", tstd);
     //
-    // try config.dependencies.put("config", config);
-    // exe.addModule("config", config);
+    try config.dependencies.put("config", config);
+    exe.addModule("config", config);
+    try utils.dependencies.put("utils", utils);
+    try utils.dependencies.put("config", config);
+    exe.addModule("utils", utils);
+    try devices.dependencies.put("devices", devices);
+    try devices.dependencies.put("config", config);
+    try devices.dependencies.put("utils", utils);
+    exe.addModule("devices", devices);
     //
     // try inc_sys.dependencies.put("inc_sys", inc_sys);
     // try inc_sys.dependencies.put("config", config);
