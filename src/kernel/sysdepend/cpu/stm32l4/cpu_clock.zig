@@ -1,6 +1,7 @@
 const config = @import("config");
 const utils = @import("utils");
 const write = utils.write;
+const sysdef = @import("libsys").sysdepend.sysdef;
 
 inline fn FLASH_ACR_LATENCY(f: u32) u32 {
     return f & 0x7; //FLASH_ACR_LATENCY_MASK = 0x7;
@@ -13,7 +14,8 @@ pub fn startup_clock(clkatr: u32) void {
     // Use HSI clock */
     const RCC_CR_HSION = 0x100;
     const RCC_CR_HSIRDY = 0x400;
-    const addr: *u32 = @as(*u32, @ptrFromInt(config.RCC_CR));
+    comptime var RCC = sysdef.RCC{};
+    const addr: *u32 = @as(*u32, @ptrFromInt(RCC.CR));
     addr.* |= @as(u32, RCC_CR_HSION); // HSI enable
     // @atomicStore(u32, addr, addr.* | @as(u32, RCC_CR_HSION), .Unordered);
     while ((addr.* & RCC_CR_HSIRDY) == 0) {} // Wait HSI ready
@@ -38,10 +40,10 @@ pub fn startup_clock(clkatr: u32) void {
     addr.* &= ~@as(u32, RCC_CR_PLLON); // Disable PLL
     while ((addr.* & RCC_CR_PLLRDY) != 0) {} // Wait PLL ready
 
-    write(config.RCC_PLLCFGR, (RCC_PLLCFGR_INIT & ~@as(u32, RCC_PLLCFGR_PLLSRC)) | RCC_PLLCFGR_PLLSRC_INIT); // Set PLL
+    write(RCC.PLLCFGR, (RCC_PLLCFGR_INIT & ~@as(u32, RCC_PLLCFGR_PLLSRC)) | RCC_PLLCFGR_PLLSRC_INIT); // Set PLL
 
     addr.* |= RCC_CR_PLLON; // Enable PLL
-    @as(*volatile u32, @ptrFromInt(config.RCC_PLLCFGR)).* |= RCC_PLLCFGR_PLLREN; // Enable PLL System Clock output
+    @as(*volatile u32, @ptrFromInt(RCC.PLLCFGR)).* |= RCC_PLLCFGR_PLLREN; // Enable PLL System Clock output
     while ((addr.* & RCC_CR_PLLRDY) == 0) {} // Wait PLL ready
     // }
 
@@ -52,7 +54,7 @@ pub fn startup_clock(clkatr: u32) void {
     addr.* &= ~@as(u32, RCC_CR_PLLSAI1ON); // Disable PLLSAT1
     while ((addr.* & RCC_CR_PLLSAI1RDY) != 0) {} // Wait PLLSAT1 disable
 
-    write(config.RCC_PLLSAI1CFGR, RCC_PLLSAI1CFGR_INIT); // Set PLLSAI1
+    write(RCC.PLLSAI1CFGR, RCC_PLLSAI1CFGR_INIT); // Set PLLSAI1
 
     addr.* |= RCC_CR_PLLSAI1ON; // Enable PLLSAI1
     while ((addr.* & RCC_CR_PLLSAI1RDY) == 0) {} // Wait PLLSAI1 ready
@@ -65,7 +67,7 @@ pub fn startup_clock(clkatr: u32) void {
     addr.* |= RCC_CR_PLLSAI2ON; // Disable PLLSAT2
     while ((addr.* & RCC_CR_PLLSAI2RDY) != 0) {} // Wait PLLSAT2 disable
 
-    write(config.RCC_PLLSAI1CFGR, RCC_PLLSAI2CFGR_INIT); // Set PLLSAI2
+    write(RCC.PLLSAI1CFGR, RCC_PLLSAI2CFGR_INIT); // Set PLLSAI2
 
     addr.* |= RCC_CR_PLLSAI2ON; // Enable PLLSAI2
     while ((addr.* & RCC_CR_PLLSAI2RDY) == 0) {} // Wait PLLSAI2 ready
@@ -74,16 +76,16 @@ pub fn startup_clock(clkatr: u32) void {
     // Set Flash Memory Access latency  */
     var f_ratency: u32 = 0x400 >> 8; // 1024
     const FLASH_ACR_LATENCY_MASK = 0x7;
-    @as(*volatile u32, @ptrFromInt(config.FLASH_ACR)).* = (@as(*volatile u32, @ptrFromInt(config.FLASH_ACR)).* & ~@as(usize, FLASH_ACR_LATENCY_MASK)) | FLASH_ACR_LATENCY(f_ratency);
-    while ((@as(*volatile u32, @ptrFromInt(config.FLASH_ACR)).* & FLASH_ACR_LATENCY_MASK) != FLASH_ACR_LATENCY(f_ratency)) {}
+    @as(*volatile u32, @ptrFromInt(sysdef.FLASH_ACR)).* = (@as(*volatile u32, @ptrFromInt(sysdef.FLASH_ACR)).* & ~@as(usize, FLASH_ACR_LATENCY_MASK)) | FLASH_ACR_LATENCY(f_ratency);
+    while ((@as(*volatile u32, @ptrFromInt(sysdef.FLASH_ACR)).* & FLASH_ACR_LATENCY_MASK) != FLASH_ACR_LATENCY(f_ratency)) {}
 
     // Clock setting */
     const RCC_CFGR_INIT = 0x0;
     const RCC_CFGR_SW = 0x3;
     const RCC_CFGR_SW_INIT = 0x3;
-    write(config.RCC_CFGR, (RCC_CFGR_INIT & ~@as(u32, RCC_CFGR_SW)) | RCC_CFGR_SW_INIT);
-    while ((@as(*volatile u32, @ptrFromInt(config.RCC_CFGR)).* & RCC_CFGR_SW) != RCC_CFGR_SW_INIT) {}
+    write(RCC.CFGR, (RCC_CFGR_INIT & ~@as(u32, RCC_CFGR_SW)) | RCC_CFGR_SW_INIT);
+    while ((@as(*volatile u32, @ptrFromInt(RCC.CFGR)).* & RCC_CFGR_SW) != RCC_CFGR_SW_INIT) {}
 
     // Disable all interrupts */
-    write(config.RCC_CIER, 0);
+    write(RCC.CIER, 0);
 }

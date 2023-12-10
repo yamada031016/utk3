@@ -1,0 +1,510 @@
+//System dependencies definition STM32L4 depended
+//Included also from assembler program.
+
+// const  = @import{ "../../../machine.h"
+
+// CPU Core-dependent definition */
+// const  = @import{ "../core/armv7m/sysdef.h"
+
+// Internal Memorie Main RAM */
+
+// STM32L478, STM32L486 Internal SRAM1   0x20000000 - 0x20017FFF  Size 96KB */
+// if (comptime  CPU_STM32L476 | CPU_STM32L486) {
+pub const INTERNAL_RAM_SIZE = 0x00018000;
+pub const INTERNAL_RAM_START = 0x20000000;
+// }
+
+pub const INTERNAL_RAM_END = INTERNAL_RAM_START + INTERNAL_RAM_SIZE;
+
+//Initial Stack pointer Used in initialization process */
+pub const INITIAL_SP = INTERNAL_RAM_END;
+
+// System configuration controler SYSCFG */
+
+pub const SYSCFG_BASE = 0x40010000;
+
+pub const SYSCFG_MEMRMP = SYSCFG_BASE + 0x0000;
+pub const SYSCFG_CFGR1 = SYSCFG_BASE + 0x0004;
+pub const SYSCFG_EXTICR1 = SYSCFG_BASE + 0x0008;
+pub const SYSCFG_EXTICR2 = SYSCFG_BASE + 0x000C;
+pub const SYSCFG_EXTICR3 = SYSCFG_BASE + 0x0010;
+pub const SYSCFG_EXTICR4 = SYSCFG_BASE + 0x0014;
+pub const SYSCFG_SCSR = SYSCFG_BASE + 0x0018;
+pub const SYSCFG_CFGR2 = SYSCFG_BASE + 0x001C;
+pub const SYSCFG_SWPR = SYSCFG_BASE + 0x0020;
+pub const SYSCFG_SKR = SYSCFG_BASE + 0x0024;
+pub const SYSCFG_SWPR2 = SYSCFG_BASE + 0x0028;
+
+//Internal flash memory controls */
+pub const FLASH_BASE = 0x40022000;
+
+pub const FLASH_ACR = FLASH_BASE + 0x0000; // Flash access control register */
+pub const FLASH_PDKEYR = FLASH_BASE + 0x0004; // Flash Power-down key register */
+pub const FLASH_KEYR = FLASH_BASE + 0x0008; // Flash key register */
+pub const FLASH_OPTKEYR = FLASH_BASE + 0x000C; // Flash option key register */
+pub const FLASH_SR = FLASH_BASE + 0x0010; // Flash status register */
+pub const FLASH_CR = FLASH_BASE + 0x0014; // Flash control register */
+pub const FLASH_ECCR = FLASH_BASE + 0x0018; // Flash ECC register */
+pub const FLASH_OPTR = FLASH_BASE + 0x0020; // Flash option register */
+pub const FLASH_PCROP1SR = FLASH_BASE + 0x0024; // Flash PCROP1 Start address register */
+pub const FLASH_PCROP1ER = FLASH_BASE + 0x0028; // Flash PCROP1 End address register */
+pub const FLASH_WRP1AR = FLASH_BASE + 0x002C; // Flash WRP1 area A address register */
+pub const FLASH_WRP1BR = FLASH_BASE + 0x0030; // Flash WRP1 area B address register */
+pub const FLASH_PCROP2SR = FLASH_BASE + 0x0044; // Flash PCROP2 Start address register */
+pub const FLASH_PCROP2ER = FLASH_BASE + 0x0048; // Flash PCROP2 End address register */
+pub const FLASH_WRP2AR = FLASH_BASE + 0x004C; // Flash WRP2 area A address register */
+pub const FLASH_WRP2BR = FLASH_BASE + 0x0050; // Flash WRP2 area B address register */
+pub const FLASH_CFGR = FLASH_BASE + 0x0130; // Flash configuration register */
+
+// FLASH_ACR bit definition */
+pub const FLASH_ACR_SLEEP_PD = 0x00004000; // Flash Power-down mode during Sleep or Low-power sleep mode
+pub const FLASH_ACR_RUN_PD = 0x00002000; // Flash Power-down mode during Run or Low-power run mode
+pub const FLASH_ACR_DCRST = 0x00001000; // Data cache reset
+pub const FLASH_ACR_ICRST = 0x00000800; // Instruction cache reset
+pub const FLASH_ACR_DCEN = 0x00000400; // Data cache enable
+pub const FLASH_ACR_ICEN = 0x00000200; // Instruction cache enable
+pub const FLASH_ACR_PRFTEN = 0x00000100; // Prefetch enable
+pub const FLASH_ACR_LATENCY_MASK = 0x00000007; // Latency
+pub fn FLASH_ACR_LATENCY(n: usize) isize {
+    return (@as(u32, n << 0) & FLASH_ACR_LATENCY_MASK);
+}
+
+// Power & Clock Control */
+//PWR Power Control registers */
+pub const PWR_BASE = 0x40007000;
+pub const PWR_CR1 = PWR_BASE + 0x0000; // Power control register 1 */
+pub const PWR_CR2 = PWR_BASE + 0x0004; // Power control register 2 */
+pub const PWR_CR3 = PWR_BASE + 0x0008; // Power control register 3 */
+pub const PWR_CR4 = PWR_BASE + 0x000C; // Power control register 4 */
+pub const PWR_SR1 = PWR_BASE + 0x0010; // Power status register 1 */
+pub const PWR_SR2 = PWR_BASE + 0x0014; // Power status register 2 */
+pub const PWR_SCR = PWR_BASE + 0x0018; // Power status clear register */
+pub const PWR_PUCRA = PWR_BASE + 0x0020; // Power Port A pull-up   control register */
+pub const PWR_PDCRA = PWR_BASE + 0x0024; // Power Port A pull-down control register */
+pub const PWR_PUCRB = PWR_BASE + 0x0028; // Power Port B pull-up   control register */
+pub const PWR_PDCRB = PWR_BASE + 0x002C; // Power Port B pull-down control register */
+pub const PWR_PUCRC = PWR_BASE + 0x0030; // Power Port C pull-up   control register */
+pub const PWR_PDCRC = PWR_BASE + 0x0034; // Power Port C pull-down control register */
+pub const PWR_PUCRD = PWR_BASE + 0x0038; // Power Port D pull-up   control register */
+pub const PWR_PDCRD = PWR_BASE + 0x003C; // Power Port D pull-down control register */
+pub const PWR_PUCRE = PWR_BASE + 0x0040; // Power Port E pull-up   control register */
+pub const PWR_PDCRE = PWR_BASE + 0x0044; // Power Port E pull-down control register */
+pub const PWR_PUCRF = PWR_BASE + 0x0048; // Power Port F pull-up   control register */
+pub const PWR_PDCRF = PWR_BASE + 0x004C; // Power Port F pull-down control register */
+pub const PWR_PUCRG = PWR_BASE + 0x0050; // Power Port G pull-up   control register */
+pub const PWR_PDCRG = PWR_BASE + 0x0054; // Power Port G pull-down control register */
+pub const PWR_PUCRH = PWR_BASE + 0x0058; // Power Port H pull-up   control register */
+pub const PWR_PDCRH = PWR_BASE + 0x005C; // Power Port H pull-down control register */
+pub const PWR_PUCRI = PWR_BASE + 0x0060; // Power Port I pull-up   control register */
+pub const PWR_PDCRI = PWR_BASE + 0x0064; // Power Port I pull-down control register */
+
+// PWR_CR1 bit definition */
+pub const PWR_CR1_LPR = 0x00004000; // Low-power mode */
+
+pub const PWR_CR1_VOS = 0x00000600; // Voltage scaling range selection */
+pub const PWR_CR1_VOS_RANGE1 = 0x00000200; //	 Range 1 */
+pub const PWR_CR1_VOS_RANGE2 = 0x00000400; //	 Range 2 */
+
+pub const PWR_CR1_DBP = 0x00000100; // Disable backup domain write protection */
+pub const PWR_CR1_LPMS = 0x00000007; // Low-power mode selection */
+pub const PWR_CR1_LPMS_STOP0 = 0x00000000; //	000 : Stop 0 mode */
+pub const PWR_CR1_LPMS_STOP1 = 0x00000001; //	001 : Stop 1 mode */
+pub const PWR_CR1_LPMS_STOP2 = 0x00000002; //	010 : Stop 2 mode */
+pub const PWR_CR1_LPMS_STANDBY = 0x00000003; //	011 : Sandby mode */
+pub const PWR_CR1_LPMS_SHUTDOWN = 0x00000004; //	1xx : Shutdown mo */
+
+// PWR register initial value */
+// PWR_CR1 */
+pub const PWR_CR1_INIT = PWR_CR1_VOS_RANGE1; // set High Performance Range Range1 */
+
+// RCC Reset & Clock control registers */
+const RCC_BASE: usize = 0x40021000;
+pub const RCC = struct {
+    // Clock control register
+    CR: usize = RCC_BASE + 0x0000,
+    // Internal clock sources calibration register
+    ICSCR: usize = RCC_BASE + 0x0004,
+    // Clock configuration register
+    CFGR: usize = RCC_BASE + 0x0008,
+    // PLL configuration register
+    PLLCFGR: usize = RCC_BASE + 0x000C,
+    // PLLSAI1 configuration register
+    PLLSAI1CFGR: usize = RCC_BASE + 0x0010,
+    // PLLSAI2 configuration register
+    PLLSAI2CFGR: usize = RCC_BASE + 0x0014,
+    // Clock interrupt enable register
+    CIER: usize = RCC_BASE + 0x0018,
+    // Clock interrupt flag register
+    CIFR: usize = RCC_BASE + 0x001C,
+    // Clock interrupt clear register
+    CICR: usize = RCC_BASE + 0x0020,
+    // AHB1 peripheral reset register
+    AHB1RSTR: usize = RCC_BASE + 0x0028,
+    // AHB2 peripheral reset register
+    AHB2RSTR: usize = RCC_BASE + 0x002C,
+    // AHB3 peripheral reset register
+    AHB3RSTR: usize = RCC_BASE + 0x0030,
+    // APB1 peripheral reset register 1
+    APB1RSTR1: usize = RCC_BASE + 0x0038,
+    // APB1 peripheral reset register 2
+    APB1RSTR2: usize = RCC_BASE + 0x003C,
+    // APB2 peripheral reset register
+    APB2RSTR: usize = RCC_BASE + 0x0040,
+    // AHB1 peripheral clock enable register
+    AHB1ENR: usize = RCC_BASE + 0x0048,
+    // AHB2 peripheral clock enable register
+    AHB2ENR: usize = RCC_BASE + 0x004C,
+    // AHB3 peripheral clock enable register
+    AHB3ENR: usize = RCC_BASE + 0x0050,
+    // APB1 peripheral clock enable register 1
+    APB1ENR1: usize = RCC_BASE + 0x0058,
+    // APB1 peripheral clock enable register 2
+    APB1ENR2: usize = RCC_BASE + 0x005C,
+    // APB2 peripheral clock enable register
+    APB2ENR: usize = RCC_BASE + 0x0060,
+    // AHB1 peripheral clocks enable in Sleep and Stop modes register
+    AHB1SMENR: usize = RCC_BASE + 0x0068,
+    // AHB2 peripheral clocks enable in Sleep and Stop modes register
+    AHB2SMENR: usize = RCC_BASE + 0x006C,
+    // AHB3 peripheral clocks enable in Sleep and Stop modes register
+    AHB3SMENR: usize = RCC_BASE + 0x0070,
+    // APB1 peripheral clocks enable in Sleep and Stop modes register 1
+    APB1SMENR1: usize = RCC_BASE + 0x0078,
+    // APB1 peripheral clocks enable in Sleep and Stop modes register 2
+    PB1SMENR2: usize = RCC_BASE + 0x007C,
+    // APB2 peripheral clocks enable in Sleep and Stop modes register
+    APB2SMENR: usize = RCC_BASE + 0x0080,
+    // Peripherals independent clock configuration register
+    CCIPR: usize = RCC_BASE + 0x0088,
+    // Backup domain control register
+    BDCR: usize = RCC_BASE + 0x0090,
+    // Control/status register
+    CSR: usize = RCC_BASE + 0x0094,
+    // Clock recovery RC register
+    CRRCR: usize = RCC_BASE + 0x0098,
+    // Peripherals independent clock configuration register
+    CCIPR2: usize = RCC_BASE + 0x009C,
+};
+
+// RCC_CR bit definition */
+pub const RCC_CR_PLLSAI2RDY = 0x20000000; // SAI2 PLL clock ready flag
+pub const RCC_CR_PLLSAI2ON = 0x10000000; // SAI2 PLL enable
+pub const RCC_CR_PLLSAI1RDY = 0x08000000; // SAI1 PLL clock ready flag
+pub const RCC_CR_PLLSAI1ON = 0x04000000; // SAI1 PLL enable
+pub const RCC_CR_PLLRDY = 0x02000000; // Main PLL clock ready flag
+pub const RCC_CR_PLLON = 0x01000000; // Main PLL enable
+pub const RCC_CR_CSSON = 0x00080000; // Clock security system enable
+pub const RCC_CR_HSEBYP = 0x00040000; // HSE crystal oscillator bypass
+pub const RCC_CR_HSERDY = 0x00020000; // HSE clock ready flag
+pub const RCC_CR_HSEON: usize = 0x00010000; // HSE clock enable
+pub const RCC_CR_HSIASFS: usize = 0x00000800; // HSI16 automatic start from Stop
+pub const RCC_CR_HSIRDY: usize = 0x00000400; // HSI16 clock ready flag
+pub const RCC_CR_HSIKERON: usize = 0x00000200; // HSI16 always enable for peripheral kernels.
+pub const RCC_CR_HSION: usize = 0x00000100; // HSI16 clock enable
+pub const RCC_CR_MSIRANGE = 0x000000F0; // MSI clock ranges
+pub const RCC_CR_MSIRGSEL = 0x00000008; // MSI clock range selection
+pub const RCC_CR_MSIPLLEN = 0x00000004; // MSI clock PLL enable
+pub const RCC_CR_MSIRDY = 0x00000002; // MSI clock ready flag
+pub const RCC_CR_MSION = 0x00000001; // MSI clock enable
+
+// MSI clock range value RCC_CR_MSIRANGE */
+pub const RCC_CR_MSIRANGE_100K = 0x00000000; //	around 100 KHz
+pub const RCC_CR_MSIRANGE_200K = 0x00000010; //	around 200 KHz
+pub const RCC_CR_MSIRANGE_400K = 0x00000020; //	around 400 KHz
+pub const RCC_CR_MSIRANGE_800K = 0x00000030; //	around 800 KHz
+pub const RCC_CR_MSIRANGE_1M = 0x00000040; //	around   1 MHz
+pub const RCC_CR_MSIRANGE_2M = 0x00000050; //	around   2 MHz
+pub const RCC_CR_MSIRANGE_4M = 0x00000060; //	around   4 MHz
+pub const RCC_CR_MSIRANGE_8M = 0x00000070; //	around   8 MHz
+pub const RCC_CR_MSIRANGE_16M = 0x00000080; //	around  16 MHz
+pub const RCC_CR_MSIRANGE_24M = 0x00000090; //	around  24 MHz
+pub const RCC_CR_MSIRANGE_32M = 0x000000A0; //	around  32 MHz
+pub const RCC_CR_MSIRANGE_48M = 0x000000B0; //	around  48 MHz
+
+// RCC_CFGR bit definition */
+pub const RCC_CFGR_MCOPRE = 0x70000000; // Microcontroller clock output prescaler
+pub const RCC_CFGR_MCOSEL = 0x0F000000; // Microcontroller clock output
+pub const RCC_CFGR_STOPWUCK = 0x00008000; // Wakeup from Stop and CSS backup clock selection
+pub const RCC_CFGR_PPRE2 = 0x00003800; // APB high-speed prescaler APB2
+pub const RCC_CFGR_PPRE1 = 0x00000700; // APB low-speed prescaler APB1
+pub const RCC_CFGR_HPRE = 0x000000F0; // AHB prescaler
+pub const RCC_CFGR_SWS = 0x0000000C; // System clock switch status
+pub const RCC_CFGR_SW = 0x00000003; // System clock switch
+
+pub const RCC_CFGR_SWS_MSI = 0x00000000; // MSI used for system clock
+pub const RCC_CFGR_SWS_HSI16 = 0x00000004; // HSI16 used for system clock
+pub const RCC_CFGR_SWS_HSE = 0x00000008; // HSE used for system clock
+pub const RCC_CFGR_SWS_PLL = 0x0000000C; // PLL used for system clock
+
+pub const RCC_CFGR_SW_MSI = 0x00000000; // Use MSI for system clock
+pub const RCC_CFGR_SW_HSI16 = 0x00000001; // Use HSI16 for system clock
+pub const RCC_CFGR_SW_HSE = 0x00000002; // Use HSE for system clock
+pub const RCC_CFGR_SW_PLL = 0x00000003; // Use PLL for system clock
+
+// RCC_PLLCFGR bit definition */
+pub const RCC_PLLCFGR_PLLR = 0x06000000; // Main PLL division factor for PLLCLK system clock
+pub const RCC_PLLCFGR_PLLREN = 0x01000000; // Main PLL PLLCLK output enable
+pub const RCC_PLLCFGR_PLLQ = 0x00600000; // Main PLL division factor for PLL48M1CLK 48 MHz clock.
+pub const RCC_PLLCFGR_PLLQEN = 0x00100000; // Main PLL PLL48M1CLK output enable
+pub const RCC_PLLCFGR_PLLP = 0x00020000; // Main PLL division factor for PLLSAI3CLK SAI1 and SAI2 clock.
+pub const RCC_PLLCFGR_PLLPEN = 0x00010000; // Main PLL PLLSAI3CLK output enable
+pub const RCC_PLLCFGR_PLLN = 0x00007F00; // Main PLL multiplication factor for VCO
+pub const RCC_PLLCFGR_PLLM = 0x000000F0; // Division factor for the main PLLinput clock
+pub const RCC_PLLCFGR_PLLSRC = 0x00000003; // Main PLL entry clock source
+
+pub const RCC_PLLCFGR_PLLSRC_NON = 0x00000000; // No clock
+pub const RCC_PLLCFGR_PLLSRC_MSI = 0x00000001; // Use MSI for system clock
+pub const RCC_PLLCFGR_PLLSRC_HSI = 0x00000002; // Use HSI16 for system clock
+pub const RCC_PLLCFGR_PLLSRC_HSE = 0x00000003; // Use HSE for system clock
+
+// RCC_APB1ENR1 bit definition */
+pub const RCC_APB1ENR1_LPTIM1EN = 0x80000000; // Low power timer 1 clock enable
+pub const RCC_APB1ENR1_OPAMPEN = 0x40000000; // OPAMP interface clock enable
+pub const RCC_APB1ENR1_DAC1EN = 0x20000000; // DAC1 interface clock enable
+pub const RCC_APB1ENR1_PWREN = 0x10000000; // Power interface clock enable
+pub const RCC_APB1ENR1_CAN1EN = 0x02000000; // CAN1 clock enable
+pub const RCC_APB1ENR1_CRSEN = 0x01000000; // Clock Recovery System clock enable
+pub const RCC_APB1ENR1_I2C3EN = 0x00800000; // I2C3 clock enable
+pub const RCC_APB1ENR1_I2C2EN = 0x00400000; // I2C2 clock enable
+pub const RCC_APB1ENR1_I2C1EN = 0x00200000; // I2C1 clock enable
+pub const RCC_APB1ENR1_UART5EN = 0x00100000; // UART5 clock enable
+pub const RCC_APB1ENR1_UART4EN = 0x00080000; // UART4 clock enable
+pub const RCC_APB1ENR1_USART3EN = 0x00040000; // USART3 clock enable
+pub const RCC_APB1ENR1_USART2EN = 0x00020000; // USART2 clock enable
+pub const RCC_APB1ENR1_SPI3EN = 0x00008000; // SPI3 clock enable
+pub const RCC_APB1ENR1_SPI2EN = 0x00004000; // SPI2 clock enable
+pub const RCC_APB1ENR1_WWDGEN = 0x00000800; // Window watchdog clock enable
+pub const RCC_APB1ENR1_RTCAPBEN = 0x00000400; // RTC APB clock enable
+pub const RCC_APB1ENR1_TIM7EN = 0x00000020; // TIM7 timer clock enable
+pub const RCC_APB1ENR1_TIM6EN = 0x00000010; // TIM6 timer clock enable
+pub const RCC_APB1ENR1_TIM5EN = 0x00000008; // TIM5 timer clock enable
+pub const RCC_APB1ENR1_TIM4EN = 0x00000004; // TIM4 timer clock enable
+pub const RCC_APB1ENR1_TIM3EN = 0x00000002; // TIM3 timer clock enable
+pub const RCC_APB1ENR1_TIM2EN = 0x00000001; // TIM2 timer clock enable
+
+// RCC_APB1ENR2 bit definition */
+pub const RCC_APB1ENR2_LPTIM2EN = 0x00000020; // Low power timer 2 clock enable
+pub const RCC_APB1ENR2_SWPMI1EN = 0x00000004; // Single wire protocol clock enable
+pub const RCC_APB1ENR2_I2C4EN = 0x00000002; // I2C4 clock enable
+pub const RCC_APB1ENR2_LPUART1EN = 0x00000001; // Low power UART 1 clock enable
+
+// RCC_APB2ENR bit definition */
+pub const RCC_APB2ENR_DFSDM1EN = 0x01000000; // DFSDM 1 Timer clock enable
+pub const RCC_APB2ENR_SAI2EN = 0x00400000; // SAI 2 clock enable
+pub const RCC_APB2ENR_SAI1EN = 0x00200000; // SAI1 clock enable
+pub const RCC_APB2ENR_TIM17EN = 0x00040000; // TIM 17 Enable timer clock
+pub const RCC_APB2ENR_TIM16EN = 0x00020000; // TIM16 Enable timer clock
+pub const RCC_APB2ENR_TIM15EN = 0x00010000; // TIM 15 Enable timer clock
+pub const RCC_APB2ENR_USART1EN = 0x00004000; // USART1 clock enable
+pub const RCC_APB2ENR_TIM8EN = 0x00002000; // TIM 8 Timer clock enable
+pub const RCC_APB2ENR_SPI1EN = 0x00001000; // SPI 1 clock enable
+pub const RCC_APB2ENR_TIM1EN = 0x00000800; // TIM1 Enable timer clock
+pub const RCC_APB2ENR_SDMMC1EN = 0x00000400; // Enable SDMMC clock
+pub const RCC_APB2ENR_FWEN = 0x00000080; // Enable Firewall Clock
+pub const RCC_APB2ENR_SYSCFGEN = 0x00000001; // SYSCFG + COMP + VREFBUF clock enable
+
+// RCC_AHB2ENR bit definition */
+pub const RCC_AHB2ENR_GPIOAEN = 0x00000001; // GPIOA clock enable
+pub const RCC_AHB2ENR_GPIOBEN = 0x00000002; // GPIOB clock enable
+pub const RCC_AHB2ENR_GPIOCEN = 0x00000004; // GPIOC clock enable
+pub const RCC_AHB2ENR_GPIODEN = 0x00000008; // GPIOD clock enable
+pub const RCC_AHB2ENR_GPIOEEN = 0x00000010; // GPIOE clock enable
+pub const RCC_AHB2ENR_GPIOFEN = 0x00000020; // GPIOF clock enable
+pub const RCC_AHB2ENR_GPIOGEN = 0x00000040; // GPIOG clock enable
+pub const RCC_AHB2ENR_GPIOHEN = 0x00000080; // GPIOH clock enable
+pub const RCC_AHB2ENR_GPIOIEN = 0x00000100; // GPIOI clock enable
+pub const RCC_AHB2ENR_ADCEN = 0x00002000; // ADC clock enable
+
+// RCC_CCIPR bit definition */
+pub const RCC_CCIPR_USARTxSEL = 0x000003FF; // USART clock select
+pub const RCC_CCIPR_LPUART1SEL = 0x00000C00; // LPUART1 clock select
+pub const RCC_CCIPR_I2CxSEL = 0x0003F000; // I2Cx clock select
+pub const RCC_CCIPR_LPTIMxSEL = 0x003C0000; // LPTIMx clock select
+pub const RCC_CCIPR_SAIxSEL = 0x03C00000; // SAIx clock select
+pub const RCC_CCIPR_CLK48SEL = 0x0C000000; // CLK48 clock select
+pub const RCC_CCIPR_ADCSEL = 0x30000000; // ADC clock select
+pub const RCC_CCIPR_SWPMI1SEL = 0x40000000; // SWPMI1 clock select
+pub const RCC_CCIPR_DFSDM1SEL = 0x80000000; // DFSDM1 clock select
+
+// System Timer clock */
+
+// Settable interval range millisecond */
+pub const MIN_TIMER_PERIOD = 1;
+pub const MAX_TIMER_PERIOD = 50;
+
+// ------------------------------------------------------------------------ */
+// Number of Interrupt vectors */
+pub const N_INTVEC = 82; // Number of Interrupt vectors */
+pub const N_SYSVEC = 16; // Number of System Exceptions */
+
+// The number of the implemented bit width for priority value fields. */
+pub const INTPRI_BITWIDTH = 4;
+
+// ------------------------------------------------------------------------ */
+// Interrupt Priority Levels */
+pub export const INTPRI_MAX_EXTINT_PRI: u8 = 1; // Highest Ext. interrupt level */
+pub const INTPRI_SVC = 0; // SVCall */
+pub const INTPRI_SYSTICK = 1; // SysTick */
+pub const INTPRI_PENDSV = 15; // PendSV */
+
+// Time-event handler interrupt level */
+pub const TIMER_INTLEVEL = 0;
+
+// ------------------------------------------------------------------------ */
+// EXTI Extended interrupt controller */
+pub const EXTI_BASE = 0x40010400;
+pub const EXTI_IMR1 = EXTI_BASE + 0x00;
+pub const EXTI_EMR1 = EXTI_BASE + 0x04;
+pub const EXTI_RTSR1 = EXTI_BASE + 0x08;
+pub const EXTI_FTSR1 = EXTI_BASE + 0x0C;
+pub const EXTI_SWIER1 = EXTI_BASE + 0x10;
+pub const EXTI_PR1 = EXTI_BASE + 0x14;
+pub const EXTI_IMR2 = EXTI_BASE + 0x20;
+pub const EXTI_EMR2 = EXTI_BASE + 0x24;
+pub const EXTI_RTSR2 = EXTI_BASE + 0x28;
+pub const EXTI_FTSR2 = EXTI_BASE + 0x2C;
+pub const EXTI_SWIER2 = EXTI_BASE + 0x30;
+pub const EXTI_PR2 = EXTI_BASE + 0x34;
+
+// Watchdog Timer */
+
+//GPIO */
+pub const GPIOA_BASE = 0x48000000;
+pub const GPIOB_BASE = 0x48000400;
+pub const GPIOC_BASE = 0x48000800;
+pub const GPIOD_BASE = 0x48000C00;
+pub const GPIOE_BASE = 0x48001000;
+pub const GPIOF_BASE = 0x48000400;
+pub const GPIOG_BASE = 0x48000800;
+pub const GPIOH_BASE = 0x48000C00;
+pub const GPIOI_BASE = 0x48002000;
+fn addGPIOX(port_id: u8, offset: usize) usize {
+    return switch (port_id) {
+        'A' => GPIOA_BASE + offset,
+        'B' => GPIOB_BASE + offset,
+        'C' => GPIOC_BASE + offset,
+        'D' => GPIOD_BASE + offset,
+        'E' => GPIOE_BASE + offset,
+        'F' => GPIOF_BASE + offset,
+        'G' => GPIOG_BASE + offset,
+        'H' => GPIOH_BASE + offset,
+        'I' => GPIOI_BASE + offset,
+        else => unreachable,
+    };
+}
+
+pub fn GPIO_MODER(port_id: u8) usize {
+    return addGPIOX(port_id, 0x00);
+} // GPIO port mode register */
+pub fn GPIO_OTYPER(port_id: u8) usize {
+    return addGPIOX(port_id, 0x04);
+} // GPIO port output type register */
+pub fn GPIO_OSPEEDR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x08);
+} // GPIO port output speed register */
+pub fn GPIO_PUPDR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x0C);
+} // GPIO port pull-up/pull-down register */
+pub fn GPIO_IDR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x10);
+} // GPIO port input data register */
+pub fn GPIO_ODR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x14);
+} // GPIO port output data register */
+pub fn GPIO_BSRR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x18);
+} // GPIO port bit set/reset register */
+pub fn GPIO_LCKR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x1C);
+} // GPIO port configuration lock register */
+pub fn GPIO_AFRL(port_id: u8) usize {
+    return addGPIOX(port_id, 0x20);
+} // GPIO alternate function low register */
+pub fn GPIO_AFRH(port_id: u8) usize {
+    return addGPIOX(port_id, 0x24);
+} // GPIO alternate function high register */
+pub fn GPIO_BRR(port_id: u8) *usize {
+    return addGPIOX(port_id, 0x28);
+} // GPIO port bit reset register */
+pub fn GPIO_ASCR(port_id: u8) usize {
+    return addGPIOX(port_id, 0x2C);
+} // GPIO port analog switch control register */
+
+test "GPIO_utils" {
+    const std = @import("std");
+    const expect = std.testing.expect;
+    try expect(GPIO_MODER('A') == 0x48000000);
+    GPIO_MODER('Z');
+}
+
+// Physical timer for STM32L4 */
+pub const CPU_HAS_PTMR = 1;
+
+// Timer register definition */
+pub const TIM2_BASE = 0x40000000;
+pub const TIM3_BASE = 0x40000400;
+pub const TIM4_BASE = 0x40000800;
+pub const TIM5_BASE = 0x40000C00;
+pub const TIM6_BASE = 0x40001000;
+pub const TIM7_BASE = 0x40001400;
+
+pub const TIMxCR1 = 0x00;
+pub const TIMxCR2 = 0x04;
+pub const TIMxSMCR = 0x08;
+pub const TIMxDIER = 0x0C;
+pub const TIMxSR = 0x10;
+pub const TIMxEGR = 0x14;
+pub const TIMxCCMR1 = 0x18;
+pub const TIMxCCMR2 = 0x1C;
+pub const TIMxCCER = 0x20;
+pub const TIMxCNT = 0x24;
+pub const TIMxPSC = 0x28;
+pub const TIMxARR = 0x2C;
+pub const TIMxCCR1 = 0x34;
+pub const TIMxCCR2 = 0x38;
+pub const TIMxCCR3 = 0x3C;
+pub const TIMxCCR4 = 0x40;
+pub const TIMxDCR = 0x48;
+pub const TIMxDMAR = 0x4C;
+pub const TIMxOR1 = 0x50;
+pub const TIMxOR2 = 0x60;
+
+pub const TIMxCR1_CEN = 1 << 0;
+pub const TIMxCR1_OPM = 1 << 3;
+pub const TIMxCR1_DIR = 1 << 4;
+pub const TIMxDIER_UIE = 1 << 0;
+pub const TIMxSR_UIF = 1 << 0;
+pub const TIMxEGR_UG = 1 << 0;
+
+// Prescaler value */
+pub const TIM2PSC_PSC_INIT = 0;
+pub const TIM3PSC_PSC_INIT = 0;
+pub const TIM4PSC_PSC_INIT = 0;
+pub const TIM5PSC_PSC_INIT = 0;
+
+// Physical timer interrupt number */
+pub const INTNO_TIM2 = 28;
+pub const INTNO_TIM3 = 29;
+pub const INTNO_TIM4 = 30;
+pub const INTNO_TIM5 = 50;
+
+// Physical timer interrupt priority */
+pub const INTPRI_TIM2 = 5;
+pub const INTPRI_TIM3 = 5;
+pub const INTPRI_TIM4 = 5;
+pub const INTPRI_TIM5 = 5;
+
+// Phycail timer Maximum count */
+pub const PTMR_MAX_CNT16 = 0x0000FFFF;
+pub const PTMR_MAX_CNT32 = 0xFFFFFFFF;
+
+// Coprocessor */
+pub const CPU_HAS_FPU = true;
+pub const CPU_HAS_DSP = false;
+
+// Number of coprocessors to use. Depends on user configuration */
+// if (comptime USE_FPU) {
+// pub const NUM_COPROCESSOR	=1
+// }else {
+pub const NUM_COPROCESSOR = 0;
+// }
