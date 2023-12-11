@@ -3,6 +3,9 @@ const cpu_clock = knlink.sysdepend.cpu_clock;
 const utils = @import("utils");
 const write = utils.write;
 const sysdef = @import("libsys").sysdepend.sysdef;
+const config = @import("config");
+const print = @import("devices").serial.print;
+const TkError = @import("libtk").errno.TkError;
 
 pub fn knl_startup_hw() void {
     const dummy_clkatr = 0;
@@ -29,4 +32,36 @@ pub fn knl_startup_hw() void {
     write(sysdef.GPIO_AFRL('B'), 0x0000_0000);
     write(sysdef.GPIO_AFRH('B'), 0x0000_0044);
     write(sysdef.GPIO_ASCR('B'), 0x0000_0001);
+}
+
+pub fn knl_shutdown_hw() void {
+    if (comptime config.USE_SHUTDOWN) {
+        // disint();
+        while (true) {}
+    }
+}
+
+// * Re-start device
+// *	mode = -1		reset and re-start	(Reset -> Boot -> Start)
+// *	mode = -2		fast re-start		(Start)
+// *	mode = -3		Normal re-start		(Boot -> Start)
+
+pub fn knl_restart_hw(mode: i32) TkError!void {
+    switch (mode) {
+        -1 => {
+            print("\r\n<< SYSTEM RESET & RESTART >>");
+            return TkError.UnsupportedFunction;
+        },
+        -2 => {
+            //  fast re-start
+            print("\r\n<< SYSTEM FAST RESTART >>");
+            return TkError.UnsupportedFunction;
+        },
+        -3 => {
+            //  Normal re-start
+            print("\r\n<< SYSTEM RESTART >>");
+            return TkError.UnsupportedFunction;
+        },
+        else => return TkError.ParameterError,
+    }
 }

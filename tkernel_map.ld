@@ -11,17 +11,18 @@ __reset_stack_pointer = ORIGIN(RAM) + LENGTH(RAM);
     .text : {
         LONG(__reset_stack_pointer);
         LONG(Reset_Handler | 1);
-        /* The whole interrupt table is 332 bytes long. Advance to that position. */
+         /*The whole interrupt table is 332 bytes long. Advance to that position. */
         . += 332;
-        /* And here comes the rest of the code, ie. all symbols starting with .text */
+         /* And here comes the rest of the code, ie. all symbols starting with .text */
         *(.text)
         *(.rodata*)
         . = ALIGN(4);
-    } > ROM  /* Put this in the flash memory region */
+    } > ROM  /* Put this in the flash memory region*/
 .ARM.exidx : {
         *(.ARM.exidx*)
         . = ALIGN(4);
     } > ROM
+    
 	/* .text : { */
 	/* 	. = ALIGN(8); */
 	/* 	__vector_org = .; */

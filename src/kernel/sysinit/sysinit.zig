@@ -11,16 +11,18 @@ const read = utils.read;
 const hw_setting = knlink.sysdepend.hw_setting;
 const config = @import("config");
 // const cpu_ctrl = knlink.sysdepend.cpu_ctrl;
-// const inc_tk = @import("inc_tk");
-// const TkError = inc_tk.errno.TkError;
 // const cpu_status = knlink.sysdepend.cpu_status;
-// const libtk = @import("libtk");
+const TkError = @import("libtk").errno.TkError;
 // const interrupt = knlink.sysdepend.interrupt;
 
 // Start micro T-Kernel
 //    Initialize sequence before micro T-Kernel start.
 //    Perform preparation necessary to start micro T-Kernel.
 pub fn main() !void {
+    errdefer |err| {
+        print("[ERROR] sysinit failed.");
+        print(@errorName(err));
+    }
     // cpu_status.DISABLE_INTERRUPT();
 
     if (comptime config.USE_TMONITOR) {
@@ -38,11 +40,11 @@ pub fn main() !void {
     }
 
     // Initialize Device before micro T-Kernel starts
-    // devinit.knl_init_device() catch |err| {
-    //     // SYSTEM_MESSAGE("!ERROR! init_device\n");
-    //     while (true) {}
-    //     return err;
-    // };
+    devinit.knl_init_device() catch |err| {
+        print("[ERROR] knl_init_device() failed.");
+        while (true) {}
+        return err;
+    };
 
     // Interrupt initialize
     // interrupt.knl_init_interrupt() catch |err| {
@@ -85,13 +87,14 @@ pub fn main() !void {
     // }
     // After this, Error handling
 
-    // Exit micro T-Kernel from Initial Task.
-    if (comptime config.USE_SHUTDOWN) {
-        //     pub fn knl_tkernel_exit() TkError!void {
-        //             knl_timer_shutdown();// Stop System timer
-        //             knl_shutdown_hw();  // Hardware-dependent Finalization
-        //             unreachable;
-        //     }
-    }
     print("SYSINIT main function!");
+}
+// Exit micro T-Kernel from Initial Task.
+pub fn knl_tkernel_exit() TkError!noreturn {
+    if (comptime config.USE_SHUTDOWN) {
+        // knl_timer_shutdown(); // Stop System timer
+        hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
+        unreachable;
+    }
+    return TkError.UnsupportedFunction;
 }

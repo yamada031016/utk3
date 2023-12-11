@@ -2,6 +2,7 @@ const config = @import("config");
 const utils = @import("utils");
 const write = utils.write;
 const read = utils.read;
+const TkError = @import("libtk").errno.TkError;
 
 pub fn put(data: u8) void {
     // wait TXE
@@ -21,7 +22,7 @@ pub fn puts(string: []const u8) void {
 
 pub fn print(string: []const u8) void {
     puts(string);
-    put('\n');
+    puts("\r\n");
 }
 
 // std.fmt.format参考にする.
@@ -33,7 +34,7 @@ pub fn tm_printf(comptime fmt: []const u8, args: anytype) void {
 }
 
 // 今はUSART2のみ対象
-pub fn dev_init_serial(unit: u8) !void {
+pub fn dev_init_serial(unit: u8) void {
     _ = unit;
     write(config.USART2_CR1, 0); // reset
     write(config.USART2_CR2, 0); // reset

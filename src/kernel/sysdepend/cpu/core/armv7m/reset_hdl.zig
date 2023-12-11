@@ -2,12 +2,12 @@ const knlink = @import("knlink");
 const hw_setting = knlink.sysdepend.hw_setting;
 const config = @import("config");
 const sysinit = knlink.sysinit;
-// const VectorTable = knlink.VectorTable;
+const VectorTable = knlink.sysdepend.vector_tbl.VectorTable;
 // const inc_tk = @import("inc_tk");
 // const TkError = inc_tk.errno.TkError;
 const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
-// const libtk = @import("libtk");
+const TkError = @import("libtk").errno.TkError;
 // const interrupt = knlink.sysdepend.interrupt;
 
 // if (comptime  CPU_CORE_ARMV7M) {
@@ -26,19 +26,20 @@ pub extern const __bss_end: *usize;
 // pub extern const __noinit_end: *void;
 // }
 
-// extern const vector_tbl: VectorTable;
+extern const vector_tbl: VectorTable;
 
-pub export fn Reset_Handler() noreturn {
+export fn Reset_Handler() callconv(.C) noreturn {
     comptime var i = 0;
     _ = i;
 
     // Startup Hardware
     hw_setting.knl_startup_hw();
-    try knlink.sysdepend.devinit.knl_start_device();
+    knlink.sysdepend.devinit.knl_start_device();
 
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
-        // var src: *u32 = @ptrCast(@constCast(&vector_tbl));
+        var src: *u32 = @ptrCast(@constCast(&vector_tbl));
+        _ = src;
         // var top: *u32 = @ptrCast(@constCast(&interrupt.exchdr_tbl));
 
         // while (i < (sysdef.N_SYSVEC + sysdef.N_INTVEC)) : (i += 1) {

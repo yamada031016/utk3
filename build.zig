@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) !void {
     const knlink = b.createModule(.{ .source_file = .{ .path = "src/kernel/knlink.zig" } });
     const libsys = b.createModule(.{ .source_file = .{ .path = "src/lib/libsys/libsys.zig" } });
     // const inc_sys = b.createModule(.{ .source_file = .{ .path = "include/sys.zig" } });
-    // const libtk = b.createModule(.{ .source_file = .{ .path = "lib/libtk.zig" } });
+    const libtk = b.createModule(.{ .source_file = .{ .path = "src/lib/libtk/libtk.zig" } });
     // const inc_tk = b.createModule(.{ .source_file = .{ .path = "include/tk.zig" } });
     // const inc_tm = b.createModule(.{ .source_file = .{ .path = "include/tm.zig" } });
     // const knlink = b.createModule(.{ .source_file = .{ .path = "kernel/knlink.zig" } });
@@ -45,16 +45,21 @@ pub fn build(b: *std.Build) !void {
     try devices.dependencies.put("devices", devices);
     try devices.dependencies.put("config", config);
     try devices.dependencies.put("utils", utils);
+    try devices.dependencies.put("libtk", libtk);
     exe.addModule("devices", devices);
 
     try libsys.dependencies.put("libsys", libsys);
     exe.addModule("libsys", libsys);
+
+    try libtk.dependencies.put("libtk", libtk);
+    exe.addModule("libtk", libtk);
 
     try knlink.dependencies.put("knlink", knlink);
     try knlink.dependencies.put("config", config);
     try knlink.dependencies.put("devices", devices);
     try knlink.dependencies.put("utils", utils);
     try knlink.dependencies.put("libsys", libsys);
+    try knlink.dependencies.put("libtk", libtk);
     exe.addModule("knlink", knlink);
     //
     // try inc_sys.dependencies.put("inc_sys", inc_sys);
