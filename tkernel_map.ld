@@ -1,4 +1,4 @@
-ENTRY(main)
+ENTRY(Reset_Handler)
 
 MEMORY
 {
@@ -10,7 +10,7 @@ SECTIONS {
 __reset_stack_pointer = ORIGIN(RAM) + LENGTH(RAM);
     .text : {
         LONG(__reset_stack_pointer);
-        LONG(main | 1);
+        LONG(Reset_Handler | 1);
         /* The whole interrupt table is 332 bytes long. Advance to that position. */
         . += 332;
         /* And here comes the rest of the code, ie. all symbols starting with .text */

@@ -16,7 +16,7 @@ pub fn build(b: *std.Build) !void {
 
     const exe = b.addExecutable(.{
         .name = "utk3",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "src/kernel/sysdepend/cpu/core/armv7m/reset_hdl.zig" },
         .target = target,
         .optimize = optimize,
     });
