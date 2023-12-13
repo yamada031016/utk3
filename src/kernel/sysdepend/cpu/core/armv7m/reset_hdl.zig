@@ -3,24 +3,22 @@ const hw_setting = knlink.sysdepend.hw_setting;
 const config = @import("config");
 const sysinit = knlink.sysinit;
 const VectorTable = knlink.sysdepend.vector_tbl.VectorTable;
-// const inc_tk = @import("inc_tk");
-// const TkError = inc_tk.errno.TkError;
 const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
 const TkError = @import("libtk").errno.TkError;
-// const interrupt = knlink.sysdepend.interrupt;
+const interrupt = knlink.sysdepend.interrupt;
 
 // if (comptime  CPU_CORE_ARMV7M) {
 
 // Low level memory manager information
-pub const knl_lowmem_top: *void = undefined; // Head of area (Low address)
-pub const knl_lowmem_limit: *void = undefined; // Head of area (Low address)
+pub const knl_lowmem_top: *volatile usize = undefined; // Head of area (Low address)
+pub const knl_lowmem_limit: *volatile usize = undefined; // Head of area (Low address)
 
-pub extern const __data_org: *usize;
-pub extern const __data_start: *usize;
-pub extern const __data_end: *usize;
-pub extern const __bss_start: *usize;
-pub extern const __bss_end: *usize;
+extern const __data_org: usize;
+extern const __data_start: usize;
+extern const __data_end: usize;
+extern const __bss_start: usize;
+extern const __bss_end: usize;
 
 // if (comptime  USE_NOINIT) {
 // pub extern const __noinit_end: *void;
@@ -42,25 +40,25 @@ export fn Reset_Handler() callconv(.C) noreturn {
         _ = src;
         // var top: *u32 = @ptrCast(@constCast(&interrupt.exchdr_tbl));
 
-        // while (i < (sysdef.N_SYSVEC + sysdef.N_INTVEC)) : (i += 1) {
-        // top.* += 1;
-        // src.* += 1;
-        // top.* = src.*;
+        // for (i..sysdef.cpu.N_SYSVEC + sysdef.cpu.N_INTVEC) |_| {
+        //     top.* += 1;
+        //     src.* += 1;
+        //     top.* = src.*;
         // }
 
         // Set Vector Table offset to SRAM
-        // @as(*volatile u32, @ptrFromInt(sysdef.sysdepend.SCB_VTOR)).* = @as(u32, interrupt.exchdr_tbl[0]);
+        // @as(*volatile u32, @ptrFromInt(sysdef.core.SCB_VTOR)).* = @as(u32, interrupt.exchdr_tbl[0]);
     }
 
     // Load .data to ram
-    // src = @as(*u32, @ptrCast(&__data_org));
-    // top = @as(*u32, @ptrCast(&__data_start));
-    // var end: *u32 = @as(*u32, @ptrCast(&__data_end));
-    // while (top != end) {
-    //     top.* += 1;
-    //     src.* += 1;
-    //     top.* = src.*;
-    // }
+    var data_src = @as(*volatile usize, @ptrCast(&__data_org));
+    var data_top = @as(*volatile usize, @ptrCast(&__data_start));
+    var data_end: *volatile usize = @as(*volatile usize, @ptrCast(&__data_end));
+    while (data_top != data_end) {
+        data_top.* += 1;
+        data_src.* += 1;
+        data_top.* = data_src.*;
+    }
 
     // Initialize .bss
     if (comptime config.USE_NOINIT) {

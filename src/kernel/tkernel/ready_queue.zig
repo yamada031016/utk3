@@ -2,14 +2,11 @@
 const tstd = @import("tstd");
 const knlink = @import("knlink");
 const TCB = knlink.TCB;
-const inc_sys = @import("inc_sys");
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
-const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
+// const inc_sys = @import("inc_sys");
+// const queue = inc_sys.queue;
+// const QUEUE = queue.QUEUE;
+// const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
 
-// #include "tstdlib.h"
-
-//
 // * Definition of ready queue structure
 // *	In the ready queue, the task queue 'tskque' is provided per priority.
 // *	The task TCB is registered onto queue with the applicable priority.

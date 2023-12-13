@@ -1,7 +1,10 @@
 //Device Management Function
 const config = @import("config");
 const knlink = @import("knlink");
-const TkError = @import("libtk").errno.TkError;
+const libtk = @import("libtk");
+const TkError = libtk.errno.TkError;
+const ID = libtk.typedef.ID;
+const tstd = knlink.tstd;
 // const tstd = knlink.tstdlib;
 // const sysmgr = knlink.sysmgr;
 // const DevCB = sysmgr.DevCB;
@@ -251,8 +254,8 @@ fn logdevnm(ldevnm: *u8, pdevnm: *u8, unitno: isize) void {
     tstd.knl_strcpy(@as([]const u8, ldevnm), @as([]const u8, pdevnm));
     if (unitno > 0) {
         var cp: *u8 = &unostr[11];
-        cp.* = '\0';
-        while (ldevnm.* != '\0') {
+        cp.* = 0;
+        while (ldevnm.* != 0) {
             ldevnm += 1;
         }
         unitno -= 1;
@@ -261,7 +264,7 @@ fn logdevnm(ldevnm: *u8, pdevnm: *u8, unitno: isize) void {
             cp.* = @as(u8, '0' + (unitno % 10));
             unitno /= 10;
         }
-        knl_strcat(@as([]const u8, ldevnm), @as([]const u8, cp));
+        tstd.knl_strcat(@as([]const u8, ldevnm), @as([]const u8, cp));
     }
 }
 

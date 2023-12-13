@@ -1,8 +1,9 @@
 // *	In-kernel dynamic memory management
 const knlink = @import("knlink");
-const inc_sys = @import("inc_sys");
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
+// const inc_sys = @import("inc_sys");
+// const queue = inc_sys.queue;
+// const QUEUE = queue.QUEUE;
+const SZ = @import("libtk").typedef.SZ;
 
 // * Memory allocation management information
 // *  Order of members must not be changed because members are used

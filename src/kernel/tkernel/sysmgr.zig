@@ -10,11 +10,6 @@ const queue = inc_sys.queue;
 const QUEUE = queue.QUEUE;
 const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
 
-// #include <tk/tkernel.h>
-// #include <sys/queue.h>
-
-// #include "kernel.h"
-
 // *	Device management function
 
 // USE_MULTI_LOCKがfalseなのでmlock*は定義されていない
@@ -52,13 +47,13 @@ pub fn DID(devcb: DevCB) u8 {
 }
 // u8, ID tekito
 pub fn DEVID(devcb: DevCB, unitno: u8) u8 {
-    return DID(devcb) + (unitno);
+    return DID(devcb) + unitno;
 }
 pub fn DEVCB(devid: isize) u8 {
-    return knl_DevCBtbl + (((devid) >> 8) - 1);
+    return knl_DevCBtbl + (devid >> 8) - 1;
 }
 pub fn UNITNO(devid: isize) u8 {
-    return (devid) & 0xff;
+    return devid & 0xff;
 }
 
 // * Open management information

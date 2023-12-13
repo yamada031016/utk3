@@ -6,7 +6,7 @@ const TkError = libtk.errno.TkError;
 const check = knlink.check;
 const config = @import("config");
 const knldef = inc_sys.knldef;
-// const syscall = inc_tk.syscall;
+const syscall = libtk.syscall;
 // const T_DEVREQ = syscall.T_DEVREQ;
 const cpu_status = knlink.sysdepend.cpu_status;
 const sysdef = inc_sys.sysdef;
@@ -17,19 +17,15 @@ pub fn tk_def_int(intno: usize, pk_dint: *const syscall.T_DINT) TkError!void {
     if (comptime config.USE_STATIC_IVT) {
         return TkError.UnsupportedFunction;
     } else {
-        var intatr: u32 = undefined;
-        var inthdr: ?isize = undefined;
+        var intatr: u32 = 0;
+        var inthdr: ?isize = null;
 
         check.CHECK_PAR(intno < sysdef.N_INTVEC);
         if (pk_dint != null) {
             check.CHECK_RSATR(pk_dint.intatr, syscall.TA_HLNG | syscall.TA_ASM);
             intatr = pk_dint.intatr;
             inthdr = pk_dint.inthdr;
-        } else {
-            intatr = 0;
-            inthdr = null;
         }
-
         {
             cpu_status.BEGIN_CRITICAL_SECTION();
             defer cpu_status.END_CRITICAL_SECTION();

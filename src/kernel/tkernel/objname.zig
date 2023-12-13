@@ -1,8 +1,8 @@
 // *	Object name support
-const knlink = @import("knlink");
-const inc_sys = @import("inc_sys");
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
+// const knlink = @import("knlink");
+// const inc_sys = @import("inc_sys");
+// const queue = inc_sys.queue;
+// const QUEUE = queue.QUEUE;
 
 // #include "kernel.h"
 

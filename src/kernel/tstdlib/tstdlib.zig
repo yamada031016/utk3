@@ -1,5 +1,5 @@
 // #include <tk/tkernel.h>
-const knlink = @import("../knlinc/knlink.zig");
+const knlink = @import("knlink");
 
 // bit operation
 // if (comptime BIGENDIAN) {
@@ -19,21 +19,16 @@ pub fn _BIT_SHIFT(n: u8) i32 {
 }
 // }
 
-// bit operation
 // if (comptime USE_FUNC_TSTDLIB_BITCLR) {
 // tstdlib_bitclr : clear specified bit
 pub fn knl_bitclr(base: *void, offset: i32) void {
-    var cp: *u8;
-    // NOTE: 下記の変数はレジスタ変数として宣言されていた.
-    var mask: u8;
-
     if (offset < 0)
         return;
 
-    cp = @as(*u8, base);
+    var cp = @as(*u8, base);
     cp += offset / 8;
 
-    mask = _BIT_SET_N(offset);
+    var mask = _BIT_SET_N(offset);
 
     cp.* &= ~mask;
 }
@@ -43,16 +38,16 @@ pub fn knl_bitclr(base: *void, offset: i32) void {
 // tstdlib_bitset : set specified bit
 pub fn knl_bitset(base: *void, offset: i32) void {
     // NOTE: 下記の変数はレジスタ変数として宣言されていた.
-    var cp: *u8;
-    var mask: u8;
+    // var cp: *u8;
+    // var mask: u8;
 
     if (offset < 0)
         return;
 
-    cp = @as(*u8, base);
+    var cp = @as(*u8, base);
     cp += offset / 8;
 
-    mask = _BIT_SET_N(offset);
+    const mask = _BIT_SET_N(offset);
 
     cp.* |= mask;
 }
@@ -64,19 +59,19 @@ pub fn knl_bitset(base: *void, offset: i32) void {
 pub fn knl_bitsearch1(base: *void, offset: i32, width: i32) i32 {
     // NOTE: 下記の変数はレジスタ変数として宣言されていた.
     //       Zigではよくわからんので放置.
-    var cp: *u8;
-    var mask: u8;
-    var position: i32;
+    // var cp: *u8;
+    // var mask: u8;
+    // var position: i32;
 
     if ((offset < 0) || (width < 0)) {
         return -1;
     }
 
-    cp = @as(*u8, base);
+    var cp = @as(*u8, base);
     cp += offset / 8;
 
-    position = 0;
-    mask = _BIT_SET_N(offset);
+    var position = 0;
+    var mask = _BIT_SET_N(offset);
 
     while (position < width) {
         if (cp.*) { // includes 1 --> search bit of 1

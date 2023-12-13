@@ -1,7 +1,9 @@
 const config = @import("config");
-const devinit = @import("knlink").sysdepend.devinit;
+const knlink = @import("knlink");
+const devinit = knlink.sysdepend.devinit;
 const TkError = @import("libtk").errno.TkError;
 const print = @import("devices").serial.print;
+const hw_setting = knlink.sysdepend.hw_setting;
 
 const INITTASK_STKSZ = 1 * 1024;
 
@@ -9,6 +11,7 @@ const INITTASK_STKSZ = 1 * 1024;
 
 fn init_task_main() TkError!void {
     var fin: i32 = 1;
+    _ = fin;
     // Start Sub-system & device driver
     // if (start_system()) {
     //     // if (comptime config.USE_SYSTEM_MESSAGE and config.USE_TMONITOR)
@@ -79,9 +82,9 @@ fn shutdown_system(fin: i32) void {
         // Shutdown message output
         if (fin >= 0) {
             print("\r\n<< SYSTEM SHUTDOWN >>");
-        } else{
+        } else {
             // Re-start sequence (platform dependent)
-            knl_restart_hw(fin);
+            hw_setting.knl_restart_hw(fin);
         }
 
         // knl_tkernel_exit(); // Stop system

@@ -8,10 +8,10 @@
 // *	However, when the size of message buffer is 0, it is difficult
 // *	to judge the wait queue if it is for receive or send,
 // *	therefore do not use this method.
-const knlink = @import("knlink");
-const inc_sys = @import("inc_sys");
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
+// const knlink = @import("knlink");
+// const inc_sys = @import("inc_sys");
+// const queue = inc_sys.queue;
+// const QUEUE = queue.QUEUE;
 
 // if (comptime USE_MESSAGEBUFFER) {
 // const MBFCB = struct {

@@ -1,17 +1,17 @@
 // *	Locked task is the highest run priority.
 // *	Unable to nest lock.
 const knlink = @import("knlink");
-const inc_sys = @import("inc_sys");
+// const inc_sys = @import("inc_sys");
 const config = @import("config");
-const knldef = inc_sys.knldef;
+// const knldef = inc_sys.knldef;
 const cpu_status = knlink.sysdepend.cpu_status;
 
 const ready_queue = knlink.rdy_que;
-const queue = inc_sys.queue;
+// const queue = inc_sys.queue;
 
 // * Object lock
 // *	Do not call from critical section
-pub fn knl_LockOBJ(loc: *OBJLOCK) void {
+pub fn knl_LockOBJ(loc: *const OBJLOCK) void {
     var klocked: bool = false;
     while (!klocked) {
         cpu_status.BEGIN_CRITICAL_SECTION();
@@ -70,9 +70,5 @@ inline fn knl_InitOBJLOCK(loc: *OBJLOCK) void {
 }
 
 inline fn knl_isLockedOBJ(loc: *OBJLOCK) bool {
-    if (loc.wtskq.next) {
-        return true;
-    } else {
-        return false;
-    }
+    return if (loc.wtskq.next) true else false;
 }

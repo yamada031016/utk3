@@ -1,8 +1,8 @@
 // *	Variable Size Memory Pool
-const knlink = @import("knlink");
-const inc_sys = @import("inc_sys");
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
+// const knlink = @import("knlink");
+// const inc_sys = @import("inc_sys");
+// const queue = inc_sys.queue;
+// const QUEUE = queue.QUEUE;
 
 // * Variable size memory pool control block
 // *	'areaque' connects memory blocks in address ascending order

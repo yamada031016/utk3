@@ -13,18 +13,12 @@ const cpu_ctrl = knlink.sysdepend.cpu_ctrl;
 const TCB = knlink.TCB;
 const inc_sys = @import("inc_sys");
 const sysdef = inc_sys.sysdef;
-const inc_tk = @import("inc_tk");
-const syscall = inc_tk.syscall;
-const TkError = inc_tk.errno.TkError;
+const libtk = @import("libtk");
+const syscall = libtk.syscall;
+const TkError = libtk.errno.TkError;
 const queue = inc_sys.queue;
 const QUEUE = queue.QUEUE;
-
-// #include "kernel.h"
-// #include "wait.h"
-// #include "check.h"
-// #include <tm/tmonitor.h>
-
-// #include "../sysdepend/cpu_task.h"
+const print = @import("devices").serial.print;
 
 // * Create task
 pub fn tk_cre_tsk(pk_ctsk: *syscall.T_CTSK) TkError!isize {
@@ -35,7 +29,6 @@ pub fn tk_cre_tsk(pk_ctsk: *syscall.T_CTSK) TkError!isize {
     }
     var sstksz: i32 = undefined;
     var stack: *void = undefined;
-    // ER	ercd;
 
     check.CHECK_RSATR(pk_ctsk.tskatr, VALID_TSKATR);
     // if (comptime !USE_IMALLOC) {
@@ -63,12 +56,13 @@ pub fn tk_cre_tsk(pk_ctsk: *syscall.T_CTSK) TkError!isize {
     }
 
     cpu_status.BEGIN_CRITICAL_SECTION();
+    defer cpu_status.END_CRITICAL_SECTION();
     // defer cpu_status.END_CRITICAL_SECTION();
     // Get control block from FreeQue */
     var tcb: *TCB = @as(*TCB, queue.QueRemoveNext(&task.knl_free_tcb));
     if (tcb == null) {
         cpu_status.END_CRITICAL_SECTION();
-        return TkError.E_LIMIT;
+        return TkError.ExceedSystemLimits;
     }
 
     // Initialize control block */
@@ -124,8 +118,6 @@ fn knl_del_tsk(tcb: *TCB) void {
 // if (comptime USE_FUNC_TK_DEL_TSK) {
 // * Delete task
 pub fn tk_del_tsk(tskid: u32) TkError!void {
-    // ER	ercd = E_OK;
-
     check.CHECK_TSKID(tskid);
     check.CHECK_NONSELF(tskid);
 
@@ -136,22 +128,18 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
     var state: TSTAT = @as(TSTAT, tcb.state);
     if (state != TSTAT.TS_DORMANT) {
         if (state == TSTAT.TS_NONEXIST) {
-            return TkError.E_NOEXS;
+            return TkError.ObjectNotExist;
         } else {
-            return TkError.E_OBJ;
+            return TkError.IncorrectObjectState;
         }
     } else {
         knl_del_tsk(tcb);
     }
-
-    // return ercd;
 }
 // }
 
 // * Start task
 pub fn tk_sta_tsk(tskid: u32, stacd: isize) TkError!void {
-    // ER	ercd = E_OK;
-
     check.CHECK_TSKID(tskid);
     check.CHECK_NONSELF(tskid);
 
@@ -159,19 +147,17 @@ pub fn tk_sta_tsk(tskid: u32, stacd: isize) TkError!void {
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
-    var state: TSTAT = @as(TSTAT, tcb.state);
+    var state: TSTAT = @as(TSTAT, tcb.*.state);
     if (state != TSTAT.TS_DORMANT) {
         if (state == TSTAT.TS_NONEXIST) {
-            return TkError.E_NOEXS;
+            return TkError.ObjectNotExist;
         } else {
-            return TkError.E_OBJ;
+            return TkError.IncorrectObjectState;
         }
     } else {
         cpu_task.knl_setup_stacd(tcb, stacd);
         task.knl_make_ready(tcb);
     }
-
-    // return ercd;
 }
 
 // * Task finalization
@@ -208,7 +194,7 @@ pub fn tk_ext_tsk() void {
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
             // SYSTEM_MESSAGE("tk_ext_tsk was called in the task independent\n");
-            while (1) {}
+            while (true) {}
             unreachable;
         }
     }
@@ -218,6 +204,7 @@ pub fn tk_ext_tsk() void {
         }
     }
 
+    // enableしてないけどええんか？
     cpu_status.DISABLE_INTERRUPT();
     knl_ter_tsk(knlink.knl_ctxtsk);
     task.knl_make_dormant(knlink.knl_ctxtsk);
@@ -240,16 +227,17 @@ pub fn tk_exd_tsk() void {
     // Check context error */
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
-            // SYSTEM_MESSAGE("tk_exd_tsk was called in the task independent\n");
+            print("tk_exd_tsk was called in the task independent");
             return;
         }
     }
     if (comptime config.CHK_CTX1) {
         if (cpu_status.in_ddsp()) {
-            // SYSTEM_MESSAGE("tk_exd_tsk was called in the dispatch disabled\n");
+            print("tk_exd_tsk was called in the dispatch disabled");
         }
     }
 
+    // enableしてないけどええんか？
     cpu_status.DISABLE_INTERRUPT();
     knl_ter_tsk(knlink.knl_ctxtsk);
     knl_del_tsk(knlink.knl_ctxtsk);
@@ -274,16 +262,16 @@ pub fn tk_ter_tsk(tskid: u32) TkError!void {
     var state: TSTAT = @as(TSTAT, tcb.state);
     if (!task.knl_task_alive(state)) {
         if (state == TSTAT.TS_NONEXIST) {
-            return TkError.E_NOEXS;
+            return TkError.ObjectNotExist;
         } else {
-            return TkError.E_OBJ;
+            return TkError.IncorrectObjectState;
         }
     } else if (tcb.klocked) {
         // Normally, it does not become this state.
         // * When the state is page-in wait in the virtual memory
         // * system and when trying to terminate any task,
         // * it becomes this state.
-        return TkError.E_OBJ;
+        return TkError.IncorrectObjectState;
     } else {
         knl_ter_tsk(tcb);
         task.knl_make_dormant(tcb);
@@ -295,7 +283,6 @@ pub fn tk_ter_tsk(tskid: u32) TkError!void {
 // * Change task priority
 pub fn tk_chg_pri(tskid: u32, tskpri: isize) TkError!void {
     var priority: isize = undefined;
-    // ER	ercd;
 
     check.CHECK_TSKID_SELF(tskid);
     check.CHECK_PRI_INI(tskpri);
@@ -305,7 +292,7 @@ pub fn tk_chg_pri(tskid: u32, tskpri: isize) TkError!void {
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
     if (tcb.state == TSTAT.TS_NONEXIST) {
-        return TkError.E_NOEXS;
+        return TkError.ObjectNotExist;
     }
 
     // Conversion priority to internal expression */
@@ -351,27 +338,19 @@ pub fn tk_rot_rdq(tskpri: isize) TkError!void {
     } else {
         task.knl_rotate_ready_queue(task.int_priority(tskpri));
     }
-
-    // return TkError.E_OK;
 }
 // }
 
 // if (comptime USE_FUNC_TK_GET_TID) {
 // * Refer task ID at execution */
 pub fn tk_get_tid() isize {
-    if (knlink.knl_ctxtsk == null) {
-        return 0;
-    } else {
-        return knlink.knl_ctxtsk.tskid;
-    }
+    return if (knlink.knl_ctxtsk == null) 0 else knlink.knl_ctxtsk.tskid;
 }
 // }
 
 // if (comptime USE_FUNC_TK_REF_TSK) {
 // * Refer task state */
 pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
-    // ER	ercd = E_OK;
-
     check.CHECK_TSKID_SELF(tskid);
 
     var tcb: *TCB = task.get_tcb_self(tskid);
@@ -382,7 +361,7 @@ pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
     defer cpu_status.END_CRITICAL_SECTION();
     var state: TSTAT = @as(TSTAT, tcb.state);
     if (state == TSTAT.TS_NONEXIST) {
-        return TkError.E_NOEXS;
+        return TkError.ObjectNotExist;
     } else {
         if ((state == TSTAT.TS_READY) and (tcb == knlink.knl_ctxtsk)) {
             pk_rtsk.tskstat = TSTAT.TTS_RUN;
@@ -399,8 +378,6 @@ pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
         pk_rtsk.wupcnt = tcb.wupcnt;
         pk_rtsk.suscnt = tcb.suscnt;
     }
-
-    // return TkError.E_OK;
 }
 // }
 
@@ -423,8 +400,6 @@ pub fn tk_rel_wai(tskid: u32) TkError!void {
     } else {
         wait.knl_wait_release_ng(tcb, TkError.E_RLWAI);
     }
-
-    // return TkError.E_OK;
 }
 // }
 

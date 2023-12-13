@@ -10,14 +10,15 @@ const cpu_task = knlink.sysdepend.cpu_task;
 const TCB = knlink.TCB;
 const inc_sys = @import("inc_sys");
 const knldef = inc_sys.knldef;
-const inc_tk = @import("inc_tk");
-const syslib = inc_tk.syslib;
-const syscall = inc_tk.syscall;
-const tkernel = inc_tk.tkernel;
-const TkError = inc_tk.errno.TkError;
+const libtk = @import("libtk");
+// const syslib = libtk.syslib;
+const syscall = libtk.syscall;
+// const tkernel = libtk.tkernel;
+const TkError = libtk.errno.TkError;
 const queue = inc_sys.queue;
 const QUEUE = queue.QUEUE;
 const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
+const PRI = libtk.typedef.PRI;
 
 pub const TSTAT = enum(u8) {
     TS_NONEXIST = 0, // Unregistered state */
@@ -29,16 +30,15 @@ pub const TSTAT = enum(u8) {
 };
 
 // * If the task is alive ( except NON-EXISTENT,DORMANT ), return TRUE.
-inline fn knl_task_alive(state: TSTAT) bool {
-    return ((state & (TSTAT.TS_READY | TSTAT.TS_WAIT | TSTAT.TS_SUSPEND)) != 0);
+pub inline fn knl_task_alive(state: TSTAT) bool {
+    return (state & (TSTAT.TS_READY | TSTAT.TS_WAIT | TSTAT.TS_SUSPEND)) != 0;
 }
 
 // * Task priority internal/external expression conversion macro
-// isize is tekito---
-fn int_priority(x: isize) isize {
+pub fn int_priority(x: PRI) isize {
     return (@as(isize, x) - knldef.MIN_TSKPRI);
 }
-fn ext_tskpri(x: isize) isize {
+pub fn ext_tskpri(x: PRI) isize {
     return (@as(isize, x) + knldef.MIN_TSKPRI);
 }
 
@@ -47,12 +47,12 @@ pub const knl_tcb_table: []TCB = undefined; // Task control block */
 pub const knl_free_tcb: QUEUE = undefined; // FreeQue */
 
 // * Get TCB from task ID.
-fn get_tcb(id: isize) TCB {
-    return (&knl_tcb_table[knldef.INDEX_TSK(id)]);
+pub fn get_tcb(id: isize) TCB {
+    return (knl_tcb_table[knldef.INDEX_TSK(id)]);
 }
-fn get_tcb_self(id: isize) TCB {
+pub fn get_tcb_self(id: isize) TCB {
     if (id == syscall.TSK_SELF) {
-        return knlink.knl_ctxtsk;
+        return knlink.knl_ctxtsk.?.*;
     } else {
         return get_tcb(id);
     }
@@ -93,20 +93,12 @@ fn get_tcb_self(id: isize) TCB {
 
 // * Reselect task to execute
 // *	Set 'schedtsk' to the head task at the ready queue.
-inline fn knl_reschedule() void {
+pub inline fn knl_reschedule() void {
     var toptsk: *TCB = queue.knl_ready_queue_top(&ready_queue.knl_ready_queue);
     if (knlink.knl_schedtsk != toptsk) {
         knlink.knl_schedtsk = toptsk;
     }
 }
-
-// #include "kernel.h"
-// #include "task.h"
-// #include "ready_queue.h"
-// #include "wait.h"
-// #include "check.h"
-//
-// #include "../sysdepend/cpu_task.h"
 
 // * Task dispatch disable state
 // Noinit(EXPORT INT	knl_dispatch_disabled);	// DDS_XXX see task.h */
@@ -125,23 +117,23 @@ inline fn knl_reschedule() void {
 pub fn knl_task_initialize() TkError!void {
     // Get system information */
     if (knldef.NUM_TSKID < 1) {
-        return TkError.E_SYS;
+        return TkError.SystemError;
     }
 
     // Initialize task execution control information */
     knlink.knl_ctxtsk = null;
-    knlink.knl_schedtsk = knlink.knl_ctxtsk;
+    knlink.knl_schedtsk = null;
     ready_queue.knl_ready_queue_initialize(&ready_queue.knl_ready_queue);
     knlink.knl_dispatch_disabled = knlink.DDS_ENABLE;
-    var tcb: *TCB = knl_tcb_table;
+    var tcb_tbl: []TCB = knl_tcb_table;
     var tskid: isize = undefined;
 
     // Register all TCBs onto FreeQue */
     queue.QueInit(&knl_free_tcb);
-    for (tcb, 0..knldef.NUM_TSKID) |tcb2, i| {
+    for (tcb_tbl, 0..knldef.NUM_TSKID) |tcb, i| {
         tskid = knldef.ID_TSK(i);
-        tcb2.tskid = tskid;
-        tcb2.state = TSTAT.TS_NONEXIST;
+        tcb.tskid = tskid;
+        tcb.state = TSTAT.TS_NONEXIST;
         // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
         //     tcb.wrdvno = tskid;
         // }
@@ -194,7 +186,7 @@ pub fn knl_make_ready(tcb: *TCB) void {
 // *	'tcb' task must be READY.
 pub fn knl_make_non_ready(tcb: *TCB) void {
     ready_queue.knl_ready_queue_delete(&ready_queue.knl_ready_queue, tcb);
-    if (knlink.knl_schedtsk == tcb) {
+    if (knlink.knl_schedtsk.? == tcb) {
         knlink.knl_schedtsk = ready_queue.knl_ready_queue_top(&ready_queue.knl_ready_queue);
     }
 }

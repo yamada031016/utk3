@@ -1,21 +1,50 @@
-const sysdef = @import("libsys").sysdepend.sysdef;
 const knlink = @import("knlink");
+const sysdef = @import("libsys").sysdepend.sysdef;
+const print = @import("devices").serial.print;
 // const reset_hdl = knlink.sysdepend.reset_hdl;
 // const exc_hdr = knlink.sysdepend.exc_hdr;
 // const interrupt = knlink.sysdepend.interrupt;
 // if (comptime  CPU_STM32L4) {
 //Exception/Interrupt Vector Table
 
-// const  = @import{ "kernel.h"
-// const  = @import{ "../../sysdepend.h"
-
-//Exception/Interrupt Vector Table
+// Exception/Interrupt Vector Table
 
 extern fn knl_dispatch_entry() callconv(.C) void;
 
 pub const Handler = *const fn () callconv(.C) void;
 
 pub fn default_handler() callconv(.C) void {
+    print("launched default handler!");
+    while (true) {}
+}
+
+pub fn nmi_handler() callconv(.C) void {
+    print("launched nmi handler!");
+    while (true) {}
+}
+
+pub fn hard_handler() callconv(.C) void {
+    print("launched hard fault handler!");
+    while (true) {}
+}
+
+pub fn mpu_handler() callconv(.C) void {
+    print("launched mpu fault handler!");
+    while (true) {}
+}
+
+pub fn bus_handler() callconv(.C) void {
+    print("launched bus fault handler!");
+    while (true) {}
+}
+
+pub fn usage_handler() callconv(.C) void {
+    print("launched usage fault handler!");
+    while (true) {}
+}
+
+pub fn svcall_handler() callconv(.C) void {
+    print("launched svcall handler!");
     while (true) {}
 }
 
@@ -39,8 +68,14 @@ pub const VectorTable = extern struct {
 };
 
 pub export const vector_tbl: VectorTable linksection(".vector") = .{
-    .top_of_stack = sysdef.INITIAL_SP,
+    .top_of_stack = sysdef.cpu.INITIAL_SP,
     .reset_handler = Reset_Handler,
+    .nmi_handler = nmi_handler,
+    .hard_fault_handler = hard_handler,
+    .mpu_fault_handler = mpu_handler,
+    .bus_fault_handler = bus_handler,
+    .usage_fault_handler = usage_handler,
+    .svcall = svcall_handler,
     // .nmi_handler = exc_hdr.NMI_Handler,
     // .hard_fault_handler = exc_hdr.HardFault_Handler,
     // .mpu_fault_handler = exc_hdr.MemManage_Handler,

@@ -1,11 +1,11 @@
 // *	Semaphore
-const tstd = @import("tstd");
-const knlink = @import("knlink");
-const TCB = knlink.TCB;
-const inc_sys = @import("inc_sys");
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
-const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
+// const tstd = @import("tstd");
+// const knlink = @import("knlink");
+// const TCB = knlink.TCB;
+// const inc_sys = @import("inc_sys");
+// const queue = inc_sys.queue;
+// const QUEUE = queue.QUEUE;
+// const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
 
 // if (comptime USE_SEMAPHORE) {
 // // * Semaphore control block

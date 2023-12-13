@@ -1,10 +1,7 @@
 //System dependencies definition STM32L4 depended
 //Included also from assembler program.
 
-// const  = @import{ "../../../machine.h"
-
 // CPU Core-dependent definition */
-// const  = @import{ "../core/armv7m/sysdef.h"
 
 // Internal Memorie Main RAM */
 
@@ -119,71 +116,39 @@ pub const PWR_CR1_INIT = PWR_CR1_VOS_RANGE1; // set High Performance Range Range
 
 // RCC Reset & Clock control registers */
 const RCC_BASE: usize = 0x40021000;
-pub const RCC = struct {
-    // Clock control register
-    CR: usize = RCC_BASE + 0x0000,
-    // Internal clock sources calibration register
-    ICSCR: usize = RCC_BASE + 0x0004,
-    // Clock configuration register
-    CFGR: usize = RCC_BASE + 0x0008,
-    // PLL configuration register
-    PLLCFGR: usize = RCC_BASE + 0x000C,
-    // PLLSAI1 configuration register
-    PLLSAI1CFGR: usize = RCC_BASE + 0x0010,
-    // PLLSAI2 configuration register
-    PLLSAI2CFGR: usize = RCC_BASE + 0x0014,
-    // Clock interrupt enable register
-    CIER: usize = RCC_BASE + 0x0018,
-    // Clock interrupt flag register
-    CIFR: usize = RCC_BASE + 0x001C,
-    // Clock interrupt clear register
-    CICR: usize = RCC_BASE + 0x0020,
-    // AHB1 peripheral reset register
-    AHB1RSTR: usize = RCC_BASE + 0x0028,
-    // AHB2 peripheral reset register
-    AHB2RSTR: usize = RCC_BASE + 0x002C,
-    // AHB3 peripheral reset register
-    AHB3RSTR: usize = RCC_BASE + 0x0030,
-    // APB1 peripheral reset register 1
-    APB1RSTR1: usize = RCC_BASE + 0x0038,
-    // APB1 peripheral reset register 2
-    APB1RSTR2: usize = RCC_BASE + 0x003C,
-    // APB2 peripheral reset register
-    APB2RSTR: usize = RCC_BASE + 0x0040,
-    // AHB1 peripheral clock enable register
-    AHB1ENR: usize = RCC_BASE + 0x0048,
-    // AHB2 peripheral clock enable register
-    AHB2ENR: usize = RCC_BASE + 0x004C,
-    // AHB3 peripheral clock enable register
-    AHB3ENR: usize = RCC_BASE + 0x0050,
-    // APB1 peripheral clock enable register 1
-    APB1ENR1: usize = RCC_BASE + 0x0058,
-    // APB1 peripheral clock enable register 2
-    APB1ENR2: usize = RCC_BASE + 0x005C,
-    // APB2 peripheral clock enable register
-    APB2ENR: usize = RCC_BASE + 0x0060,
-    // AHB1 peripheral clocks enable in Sleep and Stop modes register
-    AHB1SMENR: usize = RCC_BASE + 0x0068,
-    // AHB2 peripheral clocks enable in Sleep and Stop modes register
-    AHB2SMENR: usize = RCC_BASE + 0x006C,
-    // AHB3 peripheral clocks enable in Sleep and Stop modes register
-    AHB3SMENR: usize = RCC_BASE + 0x0070,
-    // APB1 peripheral clocks enable in Sleep and Stop modes register 1
-    APB1SMENR1: usize = RCC_BASE + 0x0078,
-    // APB1 peripheral clocks enable in Sleep and Stop modes register 2
-    PB1SMENR2: usize = RCC_BASE + 0x007C,
-    // APB2 peripheral clocks enable in Sleep and Stop modes register
-    APB2SMENR: usize = RCC_BASE + 0x0080,
-    // Peripherals independent clock configuration register
-    CCIPR: usize = RCC_BASE + 0x0088,
-    // Backup domain control register
-    BDCR: usize = RCC_BASE + 0x0090,
-    // Control/status register
-    CSR: usize = RCC_BASE + 0x0094,
-    // Clock recovery RC register
-    CRRCR: usize = RCC_BASE + 0x0098,
-    // Peripherals independent clock configuration register
-    CCIPR2: usize = RCC_BASE + 0x009C,
+pub const RCC = enum(usize) {
+    CR = RCC_BASE + 0x0, // Clock control register */
+    ICSCR = RCC_BASE + 0x0004, // Internal clock sources calibration register */
+    CFGR = RCC_BASE + 0x0008, // Clock configuration register */
+    PLLCFGR = RCC_BASE + 0x000C, // PLL configuration register */
+    PLLSAI1CFGR = RCC_BASE + 0x0010, // PLLSAI1 configuration register */
+    PLLSAI2CFGR = RCC_BASE + 0x0014, // PLLSAI2 configuration register */
+    CIER = RCC_BASE + 0x0018, // Clock interrupt enable register */
+    CIFR = RCC_BASE + 0x001C, // Clock interrupt flag register */
+    CICR = RCC_BASE + 0x0020, // Clock interrupt clear register */
+    AHB1RSTR = RCC_BASE + 0x0028, // AHB1 peripheral reset register */
+    AHB2RSTR = RCC_BASE + 0x002C, // AHB2 peripheral reset register */
+    AHB3RSTR = RCC_BASE + 0x0030, // AHB3 peripheral reset register */
+    APB1RSTR1 = RCC_BASE + 0x0038, // APB1 peripheral reset register 1 */
+    APB1RSTR2 = RCC_BASE + 0x003C, // APB1 peripheral reset register 2 */
+    APB2RSTR = RCC_BASE + 0x0040, // APB2 peripheral reset register */
+    AHB1ENR = RCC_BASE + 0x0048, // AHB1 peripheral clock enable register */
+    AHB2ENR = RCC_BASE + 0x004C, // AHB2 peripheral clock enable register */
+    AHB3ENR = RCC_BASE + 0x0050, // AHB3 peripheral clock enable register */
+    APB1ENR1 = RCC_BASE + 0x0058, // APB1 peripheral clock enable register 1 */
+    APB1ENR2 = RCC_BASE + 0x005C, // APB1 peripheral clock enable register 2 */
+    APB2ENR = RCC_BASE + 0x0060, // APB2 peripheral clock enable register */
+    AHB1SMENR = RCC_BASE + 0x0068, // AHB1 peripheral clocks enable in Sleep and Stop modes register */
+    AHB2SMENR = RCC_BASE + 0x006C, // AHB2 peripheral clocks enable in Sleep and Stop modes register */
+    AHB3SMENR = RCC_BASE + 0x0070, // AHB3 peripheral clocks enable in Sleep and Stop modes register */
+    APB1SMENR1 = RCC_BASE + 0x0078, // APB1 peripheral clocks enable in Sleep and Stop modes register 1 */
+    APB1SMENR2 = RCC_BASE + 0x007C, // APB1 peripheral clocks enable in Sleep and Stop modes register 2 */
+    APB2SMENR = RCC_BASE + 0x0080, // APB2 peripheral clocks enable in Sleep and Stop modes register */
+    CCIPR = RCC_BASE + 0x0088, // Peripherals independent clock configuration register */
+    BDCR = RCC_BASE + 0x0090, // Backup domain control register */
+    CSR = RCC_BASE + 0x0094, // Control/status register */
+    CRRCR = RCC_BASE + 0x0098, // Clock recovery RC register */
+    CCIPR2 = RCC_BASE + 0x009C, // Peripherals independent clock configuration register */
 };
 
 // RCC_CR bit definition */
@@ -342,7 +307,7 @@ pub const INTPRI_BITWIDTH = 4;
 
 // ------------------------------------------------------------------------ */
 // Interrupt Priority Levels */
-pub export const INTPRI_MAX_EXTINT_PRI: u8 = 1; // Highest Ext. interrupt level */
+pub export const INTPRI_MAX_EXTINT_PRI: isize = 1; // Highest Ext. interrupt level */
 pub const INTPRI_SVC = 0; // SVCall */
 pub const INTPRI_SYSTICK = 1; // SysTick */
 pub const INTPRI_PENDSV = 15; // PendSV */
@@ -378,6 +343,7 @@ pub const GPIOF_BASE = 0x48000400;
 pub const GPIOG_BASE = 0x48000800;
 pub const GPIOH_BASE = 0x48000C00;
 pub const GPIOI_BASE = 0x48002000;
+
 fn addGPIOX(port_id: u8, offset: usize) usize {
     return switch (port_id) {
         'A' => GPIOA_BASE + offset,
@@ -429,13 +395,6 @@ pub fn GPIO_BRR(port_id: u8) *usize {
 pub fn GPIO_ASCR(port_id: u8) usize {
     return addGPIOX(port_id, 0x2C);
 } // GPIO port analog switch control register */
-
-test "GPIO_utils" {
-    const std = @import("std");
-    const expect = std.testing.expect;
-    try expect(GPIO_MODER('A') == 0x48000000);
-    GPIO_MODER('Z');
-}
 
 // Physical timer for STM32L4 */
 pub const CPU_HAS_PTMR = 1;

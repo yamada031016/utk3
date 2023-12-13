@@ -1,6 +1,12 @@
 //Macro for Error Check
 const config = @import("config");
-const TkError = @import("libtk").errno.TkError;
+const libtk = @import("libtk");
+const TkError = libtk.errno.TkError;
+const typedef = libtk.typedef;
+const ID = typedef.ID;
+const TMO = typedef.TMO;
+const ATR = typedef.ATR;
+const PRI = typedef.PRI;
 
 //Check object ID range (TkError.E_ID)
 
@@ -31,7 +37,7 @@ pub inline fn CHECK_FLGID(flgid: ID) TkError!void {
     }
 }
 
-pub inline fn CHECK_MBXisize(mbxid: ID) TkError!void {
+pub inline fn CHECK_MBXID(mbxid: ID) TkError!void {
     if (!CHK_MBXID(mbxid)) {
         return TkError.IncorrectIdNumber;
     }
@@ -108,7 +114,7 @@ pub inline fn CHECK_PRI_RUN(pri: PRI) TkError!void {
 //Check timeout specification value (TkError.E_PAR)
 // if (comptime  CHK_PAR)
 pub inline fn CHECK_TMOUT(tmout: TMO) TkError!void {
-    if (!((tmout) >= TMO_FEVR)) {
+    if (!((tmout) >= typedef.TMO_FEVR)) {
         return TkError.ParameterError;
     }
 }
@@ -169,7 +175,7 @@ pub inline fn CHECK_DISPATCH() TkError!void {
 
 pub inline fn CHECK_DISPATCH_POL(tmout: TMO) TkError!void {
     if (comptime config.CHK_CTX) {
-        if ((tmout) != TMO_POL and in_ddsp()) {
+        if ((tmout) != typedef.TMO_POL and in_ddsp()) {
             return TkError.ContextError;
         }
     }

@@ -1,1 +1,1 @@
-pub const sysdef = @import("cpu/stm32l4/sysdef.zig");
+pub const sysdef = @import("sysdef.zig");
