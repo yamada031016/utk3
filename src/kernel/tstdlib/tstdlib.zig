@@ -1,6 +1,3 @@
-// #include <tk/tkernel.h>
-const knlink = @import("knlink");
-
 // bit operation
 // if (comptime BIGENDIAN) {
 //     pub fn _BIT_SET_N(n: i32) i32 {

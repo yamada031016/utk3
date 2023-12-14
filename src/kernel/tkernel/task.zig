@@ -3,21 +3,19 @@
 // *	Can check with 'state & TS_WAIT' whether the task is in the wait state.
 // *	Can check with 'state & TS_SUSPEND' whether the task is in the forced
 // *	wait state.
-const tstd = @import("tstd");
 const knlink = @import("knlink");
 const ready_queue = knlink.rdy_que;
 const cpu_task = knlink.sysdepend.cpu_task;
 const TCB = knlink.TCB;
-const inc_sys = @import("inc_sys");
-const knldef = inc_sys.knldef;
+const libsys = @import("libsys");
+const knldef = libsys.knldef;
 const libtk = @import("libtk");
 // const syslib = libtk.syslib;
 const syscall = libtk.syscall;
 // const tkernel = libtk.tkernel;
 const TkError = libtk.errno.TkError;
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
-const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
+const queue = libsys.queue;
+const TkQueue = queue.TkQueue;
 const PRI = libtk.typedef.PRI;
 
 pub const TSTAT = enum(u8) {
@@ -43,8 +41,8 @@ pub fn ext_tskpri(x: PRI) isize {
 }
 
 // * Task control information
-pub const knl_tcb_table: []TCB = undefined; // Task control block */
-pub const knl_free_tcb: QUEUE = undefined; // FreeQue */
+pub const knl_tcb_table: [knldef.NUM_TSKID]*TCB = undefined; // Task control block */
+pub var knl_free_tcb = TkQueue(*queue.TCBNode).init();
 
 // * Get TCB from task ID.
 pub fn get_tcb(id: isize) TCB {
@@ -89,14 +87,14 @@ pub fn get_tcb_self(id: isize) TCB {
 // IMPORT void knl_rotate_ready_queue( INT priority );
 // IMPORT void knl_rotate_ready_queue_run( void );
 
-// #include "ready_queue.h"
-
 // * Reselect task to execute
 // *	Set 'schedtsk' to the head task at the ready queue.
 pub inline fn knl_reschedule() void {
-    var toptsk: *TCB = queue.knl_ready_queue_top(&ready_queue.knl_ready_queue);
-    if (knlink.knl_schedtsk != toptsk) {
-        knlink.knl_schedtsk = toptsk;
+    var toptsk: *TCB = ready_queue.knl_ready_queue.top();
+    if (knlink.knl_schedtsk) |elem| {
+        if (elem != toptsk) {
+            elem.* = toptsk.*;
+        }
     }
 }
 
@@ -115,6 +113,7 @@ pub inline fn knl_reschedule() void {
 
 // * TCB Initialization
 pub fn knl_task_initialize() TkError!void {
+    errdefer @import("devices").serial.print("knl_task_initialize() failed");
     // Get system information */
     if (knldef.NUM_TSKID < 1) {
         return TkError.SystemError;
@@ -123,23 +122,34 @@ pub fn knl_task_initialize() TkError!void {
     // Initialize task execution control information */
     knlink.knl_ctxtsk = null;
     knlink.knl_schedtsk = null;
-    ready_queue.knl_ready_queue_initialize(&ready_queue.knl_ready_queue);
+    // knl_ready_queueはinit済み
+    // ready_queue.RdyQueue().init();
     knlink.knl_dispatch_disabled = knlink.DDS_ENABLE;
-    var tcb_tbl: []TCB = knl_tcb_table;
+    var tcb_tbl: [knldef.NUM_TSKID]*TCB = knl_tcb_table;
+    _ = tcb_tbl;
     var tskid: isize = undefined;
+    _ = tskid;
 
     // Register all TCBs onto FreeQue */
-    queue.QueInit(&knl_free_tcb);
-    for (tcb_tbl, 0..knldef.NUM_TSKID) |tcb, i| {
-        tskid = knldef.ID_TSK(i);
-        tcb.tskid = tskid;
-        tcb.state = TSTAT.TS_NONEXIST;
-        // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
-        //     tcb.wrdvno = tskid;
-        // }
-        queue.QueInsert(&tcb.tskque, &knl_free_tcb);
-    }
-    // return TkError.E_OK;
+    knl_free_tcb = queue.TkQueue(*queue.TCBNode).init();
+    var FreeQue = TkQueue(*queue.TCBNode).init();
+    _ = FreeQue;
+    // 多分tcb_tblがundefinedなせいでtcbにアクセスすると関数がpanic?になる
+    // エラーも出ないのでsysinitに制御が戻っていないと思う
+    // 必要になるまで下記の処理を封印する
+
+    // for (tcb_tbl, 0..) |tcb, i| {
+    //     tskid = knldef.ID_TSK(@intCast(i));
+    //     tcb.tskid = tskid;
+    //     tcb.state = TSTAT.TS_NONEXIST;
+    //     // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
+    //     //     tcb.wrdvno = tskid;
+    //     // }
+    //     if (tcb.tskque != null) {
+    //         knl_free_tcb.enqueue(tcb.tskque.?);
+    //         FreeQue.enqueue(tcb.tskque.?);
+    //     }
+    // }
 }
 
 // * Prepare task execution.
@@ -174,7 +184,7 @@ pub fn knl_make_dormant(tcb: *TCB) void {
 // *	update 'knl_schedtsk' and request to start task dispatcher.
 pub fn knl_make_ready(tcb: *TCB) void {
     tcb.state = TSTAT.TS_READY;
-    if (ready_queue.knl_ready_queue_insert(&ready_queue.knl_ready_queue, tcb)) {
+    if (ready_queue.knl_ready_queue.insert(tcb)) {
         knlink.knl_schedtsk = tcb;
     }
 }
@@ -185,48 +195,49 @@ pub fn knl_make_ready(tcb: *TCB) void {
 // *	highest priority task in the ready queue.
 // *	'tcb' task must be READY.
 pub fn knl_make_non_ready(tcb: *TCB) void {
-    ready_queue.knl_ready_queue_delete(&ready_queue.knl_ready_queue, tcb);
+    ready_queue.knl_ready_queue.delete(tcb);
     if (knlink.knl_schedtsk.? == tcb) {
-        knlink.knl_schedtsk = ready_queue.knl_ready_queue_top(&ready_queue.knl_ready_queue);
+        knlink.knl_schedtsk = ready_queue.knl_ready_queue.top();
     }
 }
 
 // * Change task priority.
-pub fn knl_change_task_priority(tcb: *TCB, priority: isize) void {
-    var oldpri: isize = undefined;
-
+pub fn knl_change_task_priority(tcb: *TCB, priority: PRI) void {
     if (tcb.state == TSTAT.TS_READY) {
         // * When deleting a task from the ready queue,
         // * a value in the 'priority' field in TCB is needed.
         // * Therefore you need to delete the task from the
         // * ready queue before changing 'tcb.priority.'
-        ready_queue.knl_ready_queue_delete(&ready_queue.knl_ready_queue, tcb);
-        tcb.priority = @as(u8, priority);
+        ready_queue.knl_ready_queue.delete(tcb);
+        tcb.priority = priority;
         ready_queue.knl_ready_queue_insert(&ready_queue.knl_ready_queue, tcb);
         knl_reschedule();
     } else {
-        oldpri = tcb.priority;
-        tcb.priority = @as(u8, priority);
+        var oldpri: PRI = tcb.priority;
+        _ = oldpri;
+        tcb.priority = @truncate(priority); // isize -> u8
 
         // If the hook routine at the task priority change is defined,
         // execute it */
-        if ((tcb.state & TSTAT.TS_WAIT) != 0 and tcb.wspec.chg_pri_hook) {
-            // function pointer table ?
-            (*tcb.wspec.chg_pri_hook)(tcb, oldpri);
-        }
+
+        // winfo実装してから
+        // if ((tcb.state & TSTAT.TS_WAIT) != 0 and tcb.wspec.chg_pri_hook) {
+        //     // function pointer table ?
+        //     (*tcb.wspec.chg_pri_hook)(tcb, oldpri);
+        // }
     }
 }
 
 // * Rotate ready queue.
 pub fn knl_rotate_ready_queue(priority: isize) void {
-    ready_queue.knl_ready_queue_rotate(&ready_queue.knl_ready_queue, priority);
+    ready_queue.knl_ready_queue.rotate(priority);
     knl_reschedule();
 }
 
 // * Rotate the ready queue including the highest priority task.
 pub fn knl_rotate_ready_queue_run() void {
     if (knlink.knl_schedtsk != null) {
-        ready_queue.knl_ready_queue_rotate(&ready_queue.knl_ready_queue, ready_queue.knl_ready_queue_top_priority(&ready_queue.knl_ready_queue));
+        ready_queue.knl_ready_queue.rotate(ready_queue.knl_ready_queue.top_priority());
         knl_reschedule();
     }
 }

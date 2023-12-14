@@ -1,38 +1,40 @@
 const config = @import("config");
 const knlink = @import("knlink");
 const devinit = knlink.sysdepend.devinit;
+const inittask = knlink.inittask;
+const usermain = knlink.usermain.usermain;
 const TkError = @import("libtk").errno.TkError;
 const print = @import("devices").serial.print;
 const hw_setting = knlink.sysdepend.hw_setting;
+const syscall = @import("libtk").syscall;
 
 const INITTASK_STKSZ = 1 * 1024;
 
-//NOTE: finって関数の返り値?もしそうならenumかunionでいい感じにできたらよさそう
-
 fn init_task_main() TkError!void {
     var fin: i32 = 1;
-    _ = fin;
     // Start Sub-system & device driver
-    // if (start_system()) {
-    //     // if (comptime config.USE_SYSTEM_MESSAGE and config.USE_TMONITOR)
-    //     // tm_printf((UB*)"\n\nmicroT-Kernel Version %x.%02x\n\n", VER_MAJOR, VER_MINOR);
-    //
-    //     // if (comptime USE_USERINIT) {
-    //     //     // Perform user defined initialization sequence
-    //     //     fin = (*(MAIN_FP)RI_USERINIT)(0, NULL);
-    //     // }
-    //     if (fin > 0) {
-    //         fin = usermain(); // User Main Program
-    //     }
-    //     // if (comptime USE_USERINIT) {
-    //     //     // Perform user defined finalization sequence
-    //     //     (*(MAIN_FP)RI_USERINIT)(-1, NULL);
-    //     // }
-    // } else |err| {
-    //     return err;
-    //     // SYSTEM_MESSAGE("!ERROR! Init Task start\n");	// Start message
-    // }
-    // shutdown_system(fin); // Never return
+    if (start_system()) {
+        if (comptime config.USE_SYSTEM_MESSAGE and config.USE_TMONITOR) {
+            // print("\n\nmicroT-Kernel Version %x.%02x\n\n", VER_MAJOR, VER_MINOR);
+            print("\n\nmicroT-Kernel Version 3.0\n\n");
+        }
+
+        // if (comptime USE_USERINIT) {
+        //     // Perform user defined initialization sequence
+        //     fin = (*(MAIN_FP)RI_USERINIT)(0, NULL);
+        // }
+        if (fin > 0) {
+            fin = usermain(); // User Main Program
+        }
+        // if (comptime USE_USERINIT) {
+        //     // Perform user defined finalization sequence
+        //     (*(MAIN_FP)RI_USERINIT)(-1, NULL);
+        // }
+    } else |err| {
+        return err;
+        // SYSTEM_MESSAGE("!ERROR! Init Task start\n");	// Start message
+    }
+    shutdown_system(fin); // Never return
     unreachable;
 }
 

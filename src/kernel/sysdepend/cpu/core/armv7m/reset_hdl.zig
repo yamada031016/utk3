@@ -7,6 +7,7 @@ const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
 const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
+const print = @import("devices").serial.print;
 
 // if (comptime  CPU_CORE_ARMV7M) {
 
@@ -105,7 +106,12 @@ export fn Reset_Handler() callconv(.C) noreturn {
     } // USE_FPU
 
     // Startup Kernel
-    try sysinit.main();
+    sysinit.main() catch |err| {
+        @import("devices").serial.print("sysinit error!");
+        switch (err) {
+            else => print("Reset Handler failed."),
+        }
+    };
     unreachable;
     // while (1)
     //   ; // guard - infinite loops

@@ -20,21 +20,13 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
-    // const tstd = b.createModule(.{ .source_file = .{ .path = "kernel/tstdlib/tstdlib.zig" } });
     const config = b.createModule(.{ .source_file = .{ .path = "src/config/config.zig" } });
     const utils = b.createModule(.{ .source_file = .{ .path = "src/lib/utils.zig" } });
     const devices = b.createModule(.{ .source_file = .{ .path = "src/devices/devices.zig" } });
     const knlink = b.createModule(.{ .source_file = .{ .path = "src/kernel/knlink.zig" } });
     const libsys = b.createModule(.{ .source_file = .{ .path = "src/lib/libsys/libsys.zig" } });
-    // const inc_sys = b.createModule(.{ .source_file = .{ .path = "include/sys.zig" } });
     const libtk = b.createModule(.{ .source_file = .{ .path = "src/lib/libtk/libtk.zig" } });
-    // const inc_tk = b.createModule(.{ .source_file = .{ .path = "include/tk.zig" } });
-    // const inc_tm = b.createModule(.{ .source_file = .{ .path = "include/tm.zig" } });
-    // const knlink = b.createModule(.{ .source_file = .{ .path = "kernel/knlink.zig" } });
-    //
-    // try tstd.dependencies.put("tstd", tstd);
-    // exe.addModule("tstd", tstd);
-    //
+
     try config.dependencies.put("config", config);
     exe.addModule("config", config);
 
@@ -49,6 +41,8 @@ pub fn build(b: *std.Build) !void {
     exe.addModule("devices", devices);
 
     try libsys.dependencies.put("libsys", libsys);
+    try libsys.dependencies.put("config", config);
+    try libsys.dependencies.put("knlink", knlink);
     exe.addModule("libsys", libsys);
 
     try libtk.dependencies.put("libtk", libtk);
