@@ -21,7 +21,6 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
     const config = b.createModule(.{ .source_file = .{ .path = "src/config/config.zig" } });
-    const utils = b.createModule(.{ .source_file = .{ .path = "src/lib/utils.zig" } });
     const devices = b.createModule(.{ .source_file = .{ .path = "src/devices/devices.zig" } });
     const knlink = b.createModule(.{ .source_file = .{ .path = "src/kernel/knlink.zig" } });
     const libsys = b.createModule(.{ .source_file = .{ .path = "src/lib/libsys/libsys.zig" } });
@@ -30,13 +29,8 @@ pub fn build(b: *std.Build) !void {
     try config.dependencies.put("config", config);
     exe.addModule("config", config);
 
-    try utils.dependencies.put("utils", utils);
-    try utils.dependencies.put("config", config);
-    exe.addModule("utils", utils);
-
     try devices.dependencies.put("devices", devices);
     try devices.dependencies.put("config", config);
-    try devices.dependencies.put("utils", utils);
     try devices.dependencies.put("libtk", libtk);
     exe.addModule("devices", devices);
 
@@ -46,38 +40,16 @@ pub fn build(b: *std.Build) !void {
     exe.addModule("libsys", libsys);
 
     try libtk.dependencies.put("libtk", libtk);
+    try libtk.dependencies.put("libsys", libsys);
     exe.addModule("libtk", libtk);
 
     try knlink.dependencies.put("knlink", knlink);
     try knlink.dependencies.put("config", config);
     try knlink.dependencies.put("devices", devices);
-    try knlink.dependencies.put("utils", utils);
     try knlink.dependencies.put("libsys", libsys);
     try knlink.dependencies.put("libtk", libtk);
     exe.addModule("knlink", knlink);
-    //
-    // try inc_sys.dependencies.put("inc_sys", inc_sys);
-    // try inc_sys.dependencies.put("config", config);
-    // try inc_sys.dependencies.put("inc_tk", inc_tk);
-    // exe.addModule("inc_sys", inc_sys);
-    //
-    // try libtk.dependencies.put("libtk", libtk);
-    // try libtk.dependencies.put("inc_sys", inc_sys);
-    // exe.addModule("libtk", libtk);
-    //
-    // try inc_tk.dependencies.put("inc_tk", inc_tk);
-    // try inc_tk.dependencies.put("libtk", libtk);
-    // exe.addModule("inc_tk", inc_tk);
-    //
-    // try inc_tm.dependencies.put("inc_tm", inc_tm);
-    // exe.addModule("inc_tm", inc_tm);
-    //
-    // try knlink.dependencies.put("knlink", knlink);
-    // try knlink.dependencies.put("inc_sys", inc_sys);
-    // try knlink.dependencies.put("inc_tk", inc_tk);
-    // try knlink.dependencies.put("libtk", libtk);
-    // exe.addModule("knlink", knlink);
-    //
+
     exe.setLinkerScript(.{ .path = "./tkernel_map.ld" });
 
     // exe.addAssemblyFile(.{ .path = "kernel/sysdepend/cpu/core/armv7m/dispatch.S" });

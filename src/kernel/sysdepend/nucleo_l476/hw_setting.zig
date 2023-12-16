@@ -1,22 +1,24 @@
 const knlink = @import("knlink");
 const cpu_clock = knlink.sysdepend.cpu_clock;
-const utils = @import("utils");
-const write = utils.write;
+const libtk = @import("libtk");
+const syslib = libtk.syslib;
+const TkError = libtk.errno.TkError;
+const int = libtk.sysdepend.int;
+const write = syslib.cpu.write;
 const sysdef = @import("libsys").sysdepend.sysdef.cpu;
+const RCC = sysdef.RCC;
 const config = @import("config");
 const print = @import("devices").serial.print;
-const TkError = @import("libtk").errno.TkError;
-const RCC = sysdef.RCC;
 
 pub fn knl_startup_hw() void {
     const dummy_clkatr = 0;
     cpu_clock.startup_clock(dummy_clkatr);
 
-    // utils.setReg(config.RCC_AHB2ENR, 1 << 0 | 1 << 1); // GPIOA, GPIOB enable
-    utils.setReg(@intFromEnum(RCC.AHB2ENR), 0x0000_0007); // GPIOA, GPIOB enable
-    // utils.setReg(config.RCC_APB1ENR1, 1 << 17); //usart2 clock enable
-    utils.setReg(@intFromEnum(RCC.APB1ENR1), 0x0002_000F); //usart2 clock enable
-    utils.setReg(@intFromEnum(RCC.APB2ENR), 0x0000_0001); //usart2 clock enable
+    // syslib.cpu.setReg(config.RCC_AHB2ENR, 1 << 0 | 1 << 1); // GPIOA, GPIOB enable
+    syslib.cpu.setReg(@intFromEnum(RCC.AHB2ENR), 0x0000_0007); // GPIOA, GPIOB enable
+    // syslib.cpu.setReg(config.RCC_APB1ENR1, 1 << 17); //usart2 clock enable
+    syslib.cpu.setReg(@intFromEnum(RCC.APB1ENR1), 0x0002_000F); //usart2 clock enable
+    syslib.cpu.setReg(@intFromEnum(RCC.APB2ENR), 0x0000_0001); //usart2 clock enable
 
     write(sysdef.GPIO_MODER('A'), 0xABFF_F7AF); // set PA2,3(USART2) PA5(LED1) enable
     write(sysdef.GPIO_OTYPER('A'), 0x0000_0000);
@@ -36,7 +38,7 @@ pub fn knl_startup_hw() void {
 
 pub fn knl_shutdown_hw() void {
     if (comptime config.USE_SHUTDOWN) {
-        // disint();
+        _ = int.core.disint();
         while (true) {}
     }
 }

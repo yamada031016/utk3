@@ -1,25 +1,17 @@
 // *	Timer Control
-const timer = knlink.timer;
-const tstd = @import("tstd");
 const knlink = @import("knlink");
-const winfo = knlink.winfo;
+const tstd = knlink.tstd;
 const config = @import("config");
-const cpu_task = knlink.sysdepend.cpu_task;
 const cpu_status = knlink.sysdepend.cpu_status;
-const cpu_ctrl = knlink.sysdepend.cpu_ctrl;
-const inc_tk = @import("inc_tk");
-const syscall = inc_tk.syscall;
-const inc_sys = @import("inc_sys");
-const knldef = inc_sys.knldef;
-const sysdef = inc_sys.sysdef;
-const TkError = inc_tk.errno.TkError;
-const TCB = knlink.TCB;
-const queue = inc_sys.queue;
-const QUEUE = queue.QUEUE;
-const typedef = inc_tk.typedef;
+const libtk = @import("libtk");
+const libsys = @import("libsys");
+const knldef = libsys.knldef;
+const TkError = libtk.errno.TkError;
+const queue = libsys.queue;
+const TkQueue = queue.TkQueue;
+const typedef = libtk.typedef;
 const SYSTIM = typedef.SYSTIM;
 const sys_timer = knlink.sysdepend.sys_timer;
-// #include "longlong.h"
 
 // * SYSTIM internal expression and conversion */
 // typedef	D	i64;	// SYSTIM int. expression */
@@ -49,7 +41,21 @@ inline fn knl_abstim_reached(curtim: u32, evttim: u32) bool {
 // typedef void	(*CBACK)(void *);	// Type of callback function */
 
 pub const TMEB = struct {
-    queue: QUEUE, // Timer event queue */
+    // queue: queue.QueNode(usize), // Timer event queue */
+    const Node = struct {
+        const This = @This();
+        data: usize,
+        next: ?*This,
+        prev: ?*This,
+
+        fn dequeue(this: *This) void {
+            if (this.*.next.? != this) {
+                this.prev.?.next = this.next;
+                this.*.next.?.prev = this.prev;
+            }
+        }
+    };
+    queue: ?*Node,
     time: u32, // Event time */
     // callback function pointerの型は仮置きしただけ
     callback: *const fn () void, // Callback function */
@@ -58,24 +64,16 @@ pub const TMEB = struct {
 
 // * Current time (Software clock) */
 pub var knl_current_time: i64 = 0; // System operation time */
-pub const knl_real_time_ofs: i64 = undefined; // Difference from actual time */
+pub var knl_real_time_ofs: i64 = undefined; // Difference from actual time */
 
 // * Time-event queue */
-pub const knl_timer_queue: QUEUE = undefined;
-
-// * Register time-event onto timer queue */
-// pub  void knl_timer_insert( TMEB *evt, TMO tmout, CBACK cback, void *arg );
-// pub  void knl_timer_insert_reltim( TMEB *event, RELTIM tmout, CBACK callback, void *arg );
-// pub  void knl_timer_insert_abs( TMEB *evt, u32 time, CBACK cback, void *arg );
+pub var knl_timer_queue: TkQueue(usize) = TkQueue(usize).init();
 
 // * Delete from time-event queue */
 inline fn knl_timer_delete(event: *TMEB) void {
-    queue.QueRemove(&event.queue);
+    event.queue.?.dequeue();
+    // queue.QueRemove(&event.queue);
 }
-
-// #include "kernel.h"
-// #include "timer.h"
-// #include "../sysdepend/sys_timer.h"
 
 // * Current time (Software clock)
 // *	'current_time' shows the total operation time since
@@ -96,12 +94,11 @@ inline fn knl_timer_delete(event: *TMEB) void {
 pub fn knl_timer_startup() TkError!void {
     knl_real_time_ofs = 0;
     knl_current_time = knl_real_time_ofs;
-    queue.QueInit(&knl_timer_queue);
+    // knl_timer_queue already initialized.
+    // knl_timer_queue.init();
 
     // Start timer interrupt */
     sys_timer.knl_start_hw_timer();
-
-    // return E_OK;
 }
 
 // if (comptime USE_SHUTDOWN) {
@@ -114,12 +111,11 @@ pub fn knl_timer_startup() TkError!void {
 // * Insert timer event to timer event queue */
 fn knl_enqueue_tmeb(event: *TMEB) void {
     var ofs: u32 = knl_current_time - ABSTIM_DIFF_MIN;
-    var q: *QUEUE = knl_timer_queue.next;
-    for (q != &knl_timer_queue) |item| {
-        if (@as(u32, event.time - ofs) < @as(u32, ((@as(*TMEB, item).time) - ofs))) {
+    var q = knl_timer_queue.next.?;
+    while (q != &knl_timer_queue) : (q = q.next.?) {
+        if (@as(u32, event.time - ofs) < @as(u32, ((@as(*TMEB, q).time) - ofs))) {
             break;
         }
-        q = q.next;
     }
     queue.QueInsert(&event.queue, q);
 }

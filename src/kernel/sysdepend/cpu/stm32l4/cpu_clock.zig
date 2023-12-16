@@ -1,6 +1,7 @@
 const config = @import("config");
-const utils = @import("utils");
-const write = utils.write;
+const libtk = @import("libtk");
+const syslib = libtk.syslib;
+const write = syslib.cpu.write;
 const sysdef = @import("libsys").sysdepend.sysdef;
 const RCC = sysdef.cpu.RCC;
 

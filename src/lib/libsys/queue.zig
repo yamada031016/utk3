@@ -1,75 +1,15 @@
 //Queuing operation */
 const knlink = @import("knlink");
 
-// Double-link queue (ring) */
-// pub const QUEUE = struct {
-//     next: ?*QUEUE,
-//     prev: ?*QUEUE,
-// };
-//
-// // Queue initialization */
-// pub inline fn QueInit(que: *?QUEUE) void {
-//     if (que.*) |*elem| {
-//         elem.next = elem;
-//         elem.prev = elem;
-//     } else {
-//         // que is null
-//     }
-// }
-//
-// // true if the queue is empty */
-// pub inline fn isQueEmpty(que: *const ?QUEUE) bool {
-//     // 多分,アドレスが同じ == 同じqueueという理屈でいいと思う
-//     // que.next == queだとZigでは構造体の==ができないのでエラー
-//     if (que.*) |elem| {
-//         return &elem.next.? == &elem;
-//     } else {
-//         // que is null
-//         return true;
-//     }
-// }
-//
-// // Insert in queue
-// //Inserts entry directly prior to que */
-// pub inline fn QueInsert(entry: *QUEUE, que: *QUEUE) void {
-//     entry.prev.? = que.prev.?;
-//     entry.next.? = que;
-//     que.prev.next.? = entry;
-//     que.prev.? = entry;
-// }
-//
-// // Delete from queue
-// //Deletes entry from queue
-// //No action is performed if entry is empty. */
-// pub inline fn QueRemove(entry: *QUEUE) void {
-//     if (entry.next.? != entry) {
-//         entry.prev.next.? = entry.next.?;
-//         entry.next.prev.? = entry.prev.?;
-//     }
-// }
-//
-// // Remove top entry
-// //Deletes the entry directly after que from the queue,
-// //and returns the deleted entry.
-// //Returns null if que is empty. */
-// pub inline fn QueRemoveNext(que: *QUEUE) ?*QUEUE {
-//     if (que.next.? == que) {
-//         return null;
-//     }
-//
-//     var entry: *QUEUE = que.next.?;
-//     que.next.? = entry.next.?;
-//     entry.next.prev.? = que;
-//
-//     return entry;
-// }
-
 // Zig std queue
-pub const TCBNode = struct {
-    data: *knlink.TCB,
-    next: ?*TCBNode,
-    prev: ?*TCBNode,
-};
+pub fn QueNode(comptime T: type) type {
+    return struct {
+        const This = @This();
+        data: T,
+        next: ?*This,
+        prev: ?*This,
+    };
+}
 
 pub fn TkQueue(comptime T: type) type {
     return struct {

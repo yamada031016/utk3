@@ -42,7 +42,7 @@ pub fn ext_tskpri(x: PRI) isize {
 
 // * Task control information
 pub const knl_tcb_table: [knldef.NUM_TSKID]*TCB = undefined; // Task control block */
-pub var knl_free_tcb = TkQueue(*queue.TCBNode).init();
+pub var knl_free_tcb = TkQueue(*TCB.Node).init();
 
 // * Get TCB from task ID.
 pub fn get_tcb(id: isize) TCB {
@@ -131,8 +131,8 @@ pub fn knl_task_initialize() TkError!void {
     _ = tskid;
 
     // Register all TCBs onto FreeQue */
-    knl_free_tcb = queue.TkQueue(*queue.TCBNode).init();
-    var FreeQue = TkQueue(*queue.TCBNode).init();
+    // knl_free_tcb = queue.TkQueue(*TCB.Node).init();
+    var FreeQue = TkQueue(*TCB.Node).init();
     _ = FreeQue;
     // 多分tcb_tblがundefinedなせいでtcbにアクセスすると関数がpanic?になる
     // エラーも出ないのでsysinitに制御が戻っていないと思う

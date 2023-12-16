@@ -3,14 +3,14 @@ const print = @import("devices").serial.print;
 const inittask = knlink.inittask;
 const devinit = knlink.sysdepend.devinit;
 const tkinit = knlink.tkinit;
-// const timer = knlink.timer;
-// const task_manage = knlink.tskmng;
+const timer = knlink.timer;
+const tskmng = knlink.task_manage;
 const utils = @import("utils");
 const write = utils.write;
 const read = utils.read;
 const hw_setting = knlink.sysdepend.hw_setting;
 const config = @import("config");
-// const cpu_ctrl = knlink.sysdepend.cpu_ctrl;
+const cpu_cntl = knlink.sysdepend.cpu_ctrl;
 // const cpu_status = knlink.sysdepend.cpu_status;
 const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
@@ -54,6 +54,7 @@ pub fn main() !void {
     };
 
     // Initialize Kernel-objects
+    // この関数でおそらくメモリ関係のバグあり
     tkinit.knl_init_object() catch |err| {
         print("!ERROR! kernel object initialize\n");
         if (config.USE_SHUTDOWN) {
@@ -64,28 +65,28 @@ pub fn main() !void {
     };
 
     // Start System Timer
-    // timer.knl_timer_startup() catch |err| {
-    //     return err;
-    // SYSTEM_MESSAGE("!ERROR! System timer startup\n");
-    // if (USE_SHUTDOWN) {
-    // hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
-    // }
-    // };
+    timer.knl_timer_startup() catch |err| {
+        print("!ERROR! System timer startup\n");
+        if (config.USE_SHUTDOWN) {
+            hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
+        }
+        return err;
+    };
 
     // Create & start initial task
-    // if (task_manage.tk_cre_tsk(&inittask.knl_init_ctsk)) |value| {
-    //     if (task_manage.tk_sta_tsk(value, 0)) {
-    //         cpu_cntl.knl_force_dispatch();
-    //         // Start Initial Task.
-    //         unreachable;
-    //     } else |err| {
-    //         return err;
-    //         // SYSTEM_MESSAGE("!ERROR! Initial Task can not start\n");
-    //     }
-    // } else |err| {
-    //     return err;
-    //     // SYSTEM_MESSAGE("!ERROR! Initial Task can not creat\n");
-    // }
+    if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |value| {
+        if (tskmng.tk_sta_tsk(value, 0)) {
+            cpu_cntl.knl_force_dispatch();
+            // Start Initial Task.
+            unreachable;
+        } else |err| {
+            print("!ERROR! Initial Task can not start");
+            return err;
+        }
+    } else |err| {
+        print("!ERROR! Initial Task can not creat");
+        return err;
+    }
     // After this, Error handling
 
     print("SYSINIT main function!");

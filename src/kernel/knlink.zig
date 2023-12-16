@@ -4,26 +4,33 @@ pub const tstd = @import("tstdlib/tstdlib.zig");
 pub const inittask = @import("inittask/inittask.zig");
 pub const usermain = @import("usermain/usermain.zig");
 // pub const mutex = @import("tkernel/mutex.zig");
-// pub const timer = @import("tkernel/timer.zig");
+pub const timer = @import("tkernel/timer.zig");
 // pub const winfo = @import("tkernel/winfo.zig");
 pub const task = @import("tkernel/task.zig");
 // pub const int = @import("tkernel/int.zig");
-// pub const check = @import("tkernel/check.zig");
+pub const check = @import("tkernel/check.zig");
 // pub const klock = @import("tkernel/klock.zig");
 // pub const memory = @import("tkernel/memory.zig");
 pub const rdy_que = @import("tkernel/ready_queue.zig");
 // pub const sysmgr = @import("tkernel/sysmgr.zig");
-// pub const tskmng = @import("tkernel/task_manage.zig");
+pub const task_manage = @import("tkernel/task_manage.zig");
 // pub const tsksync = @import("tkernel/task_sync.zig");
 // pub const timer_calls = @import("tkernel/time_calls.zig");
 pub const tkinit = @import("tkernel/tkinit.zig");
-// pub const wait = @import("tkernel/wait.zig");
+pub const wait = @import("tkernel/wait.zig");
 
 const queue = @import("libsys").queue;
 const TkQueue = queue.TkQueue;
 
 pub const TCB = struct {
-    tskque: ?*queue.TCBNode, // Task queue */
+    pub const Node = struct {
+        const This = @This();
+        data: *TCB,
+        next: ?*This,
+        prev: ?*This,
+    };
+    tskque: ?*Node,
+    // tskque: ?*queue.QueNode(*TCB), // Task queue */
     tskid: isize, // Task isize */
     exinf: *void, // Extended information */
     tskatr: u32, // Task attribute */

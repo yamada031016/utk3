@@ -10,11 +10,6 @@ const interrupt = knlink.sysdepend.interrupt;
 const print = @import("devices").serial.print;
 
 // if (comptime  CPU_CORE_ARMV7M) {
-
-// Low level memory manager information
-pub const knl_lowmem_top: *volatile usize = undefined; // Head of area (Low address)
-pub const knl_lowmem_limit: *volatile usize = undefined; // Head of area (Low address)
-
 extern const __data_org: usize;
 extern const __data_start: usize;
 extern const __data_end: usize;

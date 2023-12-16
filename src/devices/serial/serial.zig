@@ -1,8 +1,9 @@
 const config = @import("config");
-const utils = @import("utils");
-const write = utils.write;
-const read = utils.read;
-const TkError = @import("libtk").errno.TkError;
+const libtk = @import("libtk");
+const syslib = libtk.syslib;
+const write = syslib.cpu.write;
+const read = syslib.cpu.read;
+const TkError = libtk.errno.TkError;
 
 pub fn put(data: u8) void {
     // wait TXE
