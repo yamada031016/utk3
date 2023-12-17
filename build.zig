@@ -35,6 +35,7 @@ pub fn build(b: *std.Build) !void {
     exe.addModule("devices", devices);
 
     try libsys.dependencies.put("libsys", libsys);
+    try libsys.dependencies.put("libtk", libtk);
     try libsys.dependencies.put("config", config);
     try libsys.dependencies.put("knlink", knlink);
     exe.addModule("libsys", libsys);

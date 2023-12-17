@@ -47,10 +47,10 @@ pub const TIMER_PERIOD = config.CNF_TIMER_PERIOD;
 pub const MIN_TSKID = 1;
 pub const MAX_TSKID = config.CNF_MAX_TSKID;
 pub const NUM_TSKID = MAX_TSKID;
-pub fn CHK_TSKID(id: isize) bool {
+pub fn CHK_TSKID(id: ID) bool {
     return (MIN_TSKPRI <= id and id <= MAX_TSKPRI);
 }
-pub fn INDEX_TSK(id: usize) usize {
+pub fn INDEX_TSK(id: ID) usize {
     return (id - MIN_TSKPRI);
 }
 pub fn ID_TSK(index: isize) isize {

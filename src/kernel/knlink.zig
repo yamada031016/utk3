@@ -20,6 +20,8 @@ pub const tkinit = @import("tkernel/tkinit.zig");
 pub const wait = @import("tkernel/wait.zig");
 
 const queue = @import("libsys").queue;
+const libtk = @import("libtk");
+const PRI = libtk.typedef.PRI;
 const TkQueue = queue.TkQueue;
 
 pub const TCB = struct {
@@ -31,19 +33,19 @@ pub const TCB = struct {
     };
     tskque: ?*Node,
     // tskque: ?*queue.QueNode(*TCB), // Task queue */
-    tskid: isize, // Task isize */
-    exinf: *void, // Extended information */
+    tskid: usize, // Task isize */
+    exinf: ?*anyopaque, // Extended information */
     tskatr: u32, // Task attribute */
-    task: isize, // Task startup address */
-    // tskctxb: sysdepend.sysdepend.CTXB, // Task context block */
+    task: *usize, // Task startup address */
+    tskctxb: sysdepend.core.CTXB, // Task context block */
     sstksz: i32, // stack size */
 
     isysmode: i8, // Task operation mode initial value */
     sysmode: i16, // Task operation mode, quasi task part call level */
 
-    ipriority: u8, // Priority at task startup */
-    bpriority: u8, // Base priority */
-    priority: u8, // Current priority */
+    ipriority: PRI, // Priority at task startup */
+    bpriority: PRI, // Base priority */
+    priority: PRI, // Current priority */
 
     state: task.TSTAT, // Task state (Int. expression) */
 
@@ -54,11 +56,11 @@ pub const TCB = struct {
     wid: isize, // Wait object isize */
     wupcnt: isize, // Number of wakeup requests queuing */
     suscnt: isize, // Number of SUSPEND request nests */
-    // wercd: inc_tk.errno.TkError, // Wait error code set area */
+    wercd: libtk.errno.TkError, // Wait error code set area */
     // winfo: winfo.WINFO, // Wait information */
     // wtmeb: timer.TMEB, // Wait timer event block */
 
-    isstack: *void, // stack pointer initial value */
+    isstack: *anyopaque, // stack pointer initial value */
 
     // if (comptime (USE_LEGACY_API and USE_RENDEZVOUS)){
     //     wrdvno: RNO, // For creating rendezvous number */
@@ -79,10 +81,10 @@ pub export var knl_schedtsk: ?*TCB = null;
 
 // pub const DDS_ENABLE = 0;
 pub const DDS_ENABLE = false;
-pub const DDS_DISABLE_IMPLICIT = -1; // set with implicit process */
+pub const DDS_DISABLE_IMPLICIT = true; // set with implicit process */
 // pub const DDS_DISABLE = 2; // set by tk_dis_dsp() */
 pub const DDS_DISABLE = true; // set by tk_dis_dsp() */
-pub export var knl_dispatch_disabled: bool = false;
+// pub export var knl_dispatch_disabled: bool = false;
 
 pub const CHAR_BIT = 8;
 pub const SCHAR_MIN = -128;

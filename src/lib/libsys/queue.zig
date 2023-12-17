@@ -37,13 +37,23 @@ pub fn TkQueue(comptime T: type) type {
 
         pub fn dequeue(this: *This) ?T {
             const start = this.start orelse return null;
-            if (start.next) |next|
-                this.start = next
-            else {
+            if (start.next) |next| {
+                this.start = next;
+            } else {
                 this.start = null;
                 this.end = null;
             }
             return start.data;
+        }
+
+        pub fn dequeueNext(this: *This) ?T {
+            const target = this.start.?.next orelse return null;
+            if (target.next) |elem| {
+                this.start.?.next = elem;
+            } else {
+                return null;
+            }
+            return target.*.data;
         }
 
         pub fn isEmpty(this: *This) ?T {

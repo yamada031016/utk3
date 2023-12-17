@@ -3,80 +3,85 @@ const config = @import("config");
 const libtk = @import("libtk");
 const TkError = libtk.errno.TkError;
 const typedef = libtk.typedef;
+const syscall = libtk.syscall;
 const ID = typedef.ID;
 const TMO = typedef.TMO;
 const ATR = typedef.ATR;
 const PRI = typedef.PRI;
+const knlink = @import("knlink");
+const cpu_status = knlink.sysdepend.cpu_status;
+const in_indp = cpu_status.in_indp;
+const knldef = @import("libsys").knldef;
 
 //Check object ID range (TkError.E_ID)
 
 // if (comptime config.CHK_ID) {
 pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
-    if (!in_indp() and (tskid == TSK_SELF)) {
+    if (!in_indp() and (tskid == syscall.TSK_SELF)) {
         return TkError.IncorrectObjectState;
-    } else if (!CHK_TSKID(tskid)) {
+    } else if (!knldef.CHK_TSKID(tskid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_TSKID_SELF(tskid: ID) TkError!void {
-    if (!((!in_indp() and (tskid) == TSK_SELF) or CHK_TSKID(tskid))) {
+    if (!((!in_indp() and (tskid) == syscall.TSK_SELF) or knldef.CHK_TSKID(tskid))) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_SEMID(semid: ID) TkError!void {
-    if (!CHK_SEMID(semid)) {
+    if (!knldef.CHK_SEMID(semid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_FLGID(flgid: ID) TkError!void {
-    if (!CHK_FLGID(flgid)) {
+    if (!knldef.CHK_FLGID(flgid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_MBXID(mbxid: ID) TkError!void {
-    if (!CHK_MBXID(mbxid)) {
+    if (!knldef.CHK_MBXID(mbxid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_MBFID(mbfid: ID) TkError!void {
-    if (!CHK_MBFID(mbfid)) {
+    if (!knldef.CHK_MBFID(mbfid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_PORID(porid: ID) TkError!void {
-    if (!CHK_PORID(porid)) {
+    if (!knldef.CHK_PORID(porid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 pub inline fn CHECK_MTXID(pisid: ID) TkError!void {
-    if (!CHK_MTXID(pisid)) {
+    if (!knldef.CHK_MTXID(pisid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 
 pub inline fn CHECK_MPLID(mplid: ID) TkError!void {
-    if (!CHK_MPLID(mplid)) {
+    if (!knldef.CHK_MPLID(mplid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 pub inline fn CHECK_MPFID(mpfid: ID) TkError!void {
-    if (!CHK_MPFID(mpfid)) {
+    if (!knldef.CHK_MPFID(mpfid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 pub inline fn CHECK_CYCID(cycid: ID) TkError!void {
-    if (!CHK_CYCID(cycid)) {
+    if (!knldef.CHK_CYCID(cycid)) {
         return TkError.IncorrectIdNumber;
     }
 }
 pub inline fn CHECK_ALMID(almid: ID) TkError!void {
-    if (!CHK_ALMID(almid)) {
+    if (!knldef.CHK_ALMID(almid)) {
         return TkError.IncorrectIdNumber;
     }
 }
@@ -85,7 +90,7 @@ pub inline fn CHECK_ALMID(almid: ID) TkError!void {
 //Check whether its own task is specified (TkError.E_OBJ)
 pub inline fn CHECK_NONSELF(tskid: ID) TkError!void {
     if (comptime config.CHK_SELF) {
-        if (!in_indp() and tskid == knl_ctxtsk.tskid) {
+        if (!in_indp() and tskid == knlink.knl_ctxtsk.tskid) {
             return TkError.IncorrectObjectState;
         }
     }
@@ -95,18 +100,18 @@ pub inline fn CHECK_NONSELF(tskid: ID) TkError!void {
 
 // if (comptime config.CHK_PAR)
 pub inline fn CHECK_PRI(pri: PRI) TkError!void {
-    if (!CHK_PRI(pri)) {
+    if (!knldef.CHK_PRI(pri)) {
         return TkError.ParameterError;
     }
 }
 pub inline fn CHECK_PRI_INI(pri: PRI) TkError!void {
-    if (pri != TPRI_INI and !CHK_PRI(pri)) {
+    if (pri != syscall.TPRI_INI and !knldef.CHK_PRI(pri)) {
         return TkError.ParameterError;
     }
 }
 
 pub inline fn CHECK_PRI_RUN(pri: PRI) TkError!void {
-    if ((pri) != TPRI_RUN and !CHK_PRI(pri)) {
+    if ((pri) != syscall.TPRI_RUN and !knldef.CHK_PRI(pri)) {
         return TkError.ParameterError;
     }
 }
@@ -137,7 +142,7 @@ pub inline fn CHECK_PAR(exp: bool) TkError!void {
 }
 
 //Check reservation attribute error (TkError.E_RSu32)
-pub inline fn CHECK_RSATR(atr: ATR, maxatr: isize) TkError!void {
+pub inline fn CHECK_RSATR(atr: ATR, maxatr: ATR) TkError!void {
     if (comptime config.CHK_RSATR) {
         if ((atr) & ~(maxatr)) {
             return TkError.ReservedAttribute;
@@ -166,7 +171,7 @@ pub inline fn CHECK_INTSK() TkError!void {
 //Check whether dispatch is in disabled state (TkError.E_CTX)
 pub inline fn CHECK_DISPATCH() TkError!void {
     if (comptime config.CHK_CTX) {
-        if (in_ddsp()) {
+        if (cpu_status.in_ddsp()) {
             return TkError.ContextError;
         }
     }
@@ -175,7 +180,7 @@ pub inline fn CHECK_DISPATCH() TkError!void {
 
 pub inline fn CHECK_DISPATCH_POL(tmout: TMO) TkError!void {
     if (comptime config.CHK_CTX) {
-        if ((tmout) != typedef.TMO_POL and in_ddsp()) {
+        if ((tmout) != typedef.TMO_POL and cpu_status.in_ddsp()) {
             return TkError.ContextError;
         }
     }

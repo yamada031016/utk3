@@ -1,4 +1,4 @@
-// *	Task Management Function
+// *	Task Management FunNextction
 const knlink = @import("knlink");
 const tstd = knlink.tstd;
 const check = knlink.check;
@@ -6,9 +6,9 @@ const task = knlink.task;
 const TSTAT = task.TSTAT;
 // const memory = knlink.memory;
 const wait = knlink.wait;
-const cpu_task = knlink.sysdepend.cpu_task;
-const cpu_status = knlink.sysdepend.cpu_status;
-const cpu_ctrl = knlink.sysdepend.cpu_ctrl;
+const cpu_task = knlink.sysdepend.core.cpu_task;
+const cpu_status = knlink.sysdepend.core.cpu_status;
+const cpu_ctrl = knlink.sysdepend.core.cpu_ctrl;
 const TCB = knlink.TCB;
 const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
@@ -20,83 +20,85 @@ const TkQueue = queue.TkQueue;
 const print = @import("devices").serial.print;
 const config = @import("config");
 const ATR = libtk.typedef.ATR;
+const PRI = libtk.typedef.PRI;
 
 // * Create task
-pub fn tk_cre_tsk(pk_ctsk: *syscall.T_CTSK) TkError!isize {
+pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
     // Valid value of task attribute */
     var VALID_TSKATR: ATR = if (comptime config.CHK_RSATR) syscall.TA_HLNG | syscall.TA_RNG3 | syscall.TA_USERBUF | syscall.TA_COPS else undefined;
     if (comptime (config.CHK_RSATR and config.USE_OBJECT_NAME)) {
         VALID_TSKATR |= syscall.TA_DSNAME;
     }
-    var sstksz: i32 = undefined;
-    var stack: *void = undefined;
+    var sstksz: isize = undefined;
+    var stack: *anyopaque = undefined;
 
-    check.CHECK_RSATR(pk_ctsk.tskatr, VALID_TSKATR);
-    // if (comptime !USE_IMALLOC) {
-    // TA_USERBUF must be specified if configured in no Imalloc */
-    check.CHECK_PAR((pk_ctsk.tskatr & syscall.TA_USERBUF) != 0);
-    // }
-    check.CHECK_PAR(pk_ctsk.stksz >= 0);
-    check.CHECK_PRI(pk_ctsk.itskpri);
+    try check.CHECK_RSATR(pk_ctsk.tskatr, VALID_TSKATR);
+    if (comptime !config.USE_IMALLOC) {
+        // TA_USERBUF must be specified if configured in no Imalloc */
+        try check.CHECK_PAR((pk_ctsk.tskatr & syscall.TA_USERBUF) != 0);
+    }
+    try check.CHECK_PAR(pk_ctsk.stksz >= 0);
+    try check.CHECK_PRI(pk_ctsk.itskpri);
 
     if ((pk_ctsk.tskatr & syscall.TA_USERBUF) != 0) {
         // Use user buffer */
         sstksz = pk_ctsk.stksz;
-        check.CHECK_PAR(sstksz >= sysdef.core.MIN_SYS_STACK_SIZE);
+        try check.CHECK_PAR(sstksz >= sysdef.core.MIN_SYS_STACK_SIZE);
         stack = pk_ctsk.bufptr;
     } else {
-        // if (comptime USE_IMALLOC) {
-        //     // Allocate system stack area */
-        //     sstksz = pk_ctsk.stksz + DEFAULT_SYS_STKSZ;
-        //     sstksz = (sstksz + 7) / 8 * 8; // Align to a multiple of 8 */
-        //     stack = knl_Imalloc(@as(u32, sstksz));
-        //     if (stack == null) {
-        //         return TkError.E_NOMEM;
-        //     }
-        // }
+        if (comptime config.USE_IMALLOC) {
+            // Allocate system stack area */
+            sstksz = pk_ctsk.stksz + sysdef.core.DEFAULT_SYS_STKSZ;
+            sstksz = (sstksz + 7) / 8 * 8; // Align to a multiple of 8 */
+            // stack = knl_Imalloc(@as(u32, sstksz));
+            if (stack == null) {
+                return TkError.InsufficientMemory;
+            }
+        }
     }
 
     {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
         // Get control block from FreeQue */
-        var tcb: *TCB = @as(*TCB, queue.QueRemoveNext(task.knl_free_tcb));
-        if (tcb == null) {
+        var free_tcb: ?*TCB = @as(?*TCB, task.knl_free_tcb.dequeueNext());
+        if (free_tcb) |tcb| {
+            // Initialize control block */
+            tcb.exinf = pk_ctsk.exinf;
+            tcb.tskatr = pk_ctsk.tskatr;
+            tcb.task = pk_ctsk.task;
+            tcb.ipriority = @as(PRI, task.int_priority(pk_ctsk.itskpri));
+            tcb.sstksz = sstksz;
+            if (comptime config.USE_OBJECT_NAME) {
+                if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {
+                    tstd.knl_strncpy(@as([]const u8, tcb.name), @as([]const u8, pk_ctsk.dsname), config.OBJECT_NAME_LENGTH);
+                }
+            }
+
+            // Set stack pointer */
+            const tmp: isize = @as(isize, @intCast(@intFromPtr(stack))) + sstksz;
+            tcb.isstack = @ptrFromInt(@as(usize, @intCast(tmp)));
+            // tcb.isstack = @as(*volatile u8, @ptrCast(stack)) + sstksz;
+
+            // Set initial value of task operation mode */
+            tcb.isysmode = 1;
+            tcb.sysmode = 1;
+            // make it to DORMANT state */
+            task.knl_make_dormant(tcb);
+
+            // ercd = tcb.tskid;
+
+            if (comptime config.USE_IMALLOC) {
+                // if ( (ercd < E_OK) && ((pk_ctsk.tskatr & TA_USERBUF) == 0) ) {
+                // 	knl_Ifree(stack);
+                // }
+            }
+
+            return tcb.tskid;
+        } else {
             cpu_status.END_CRITICAL_SECTION();
             return TkError.ExceedSystemLimits;
         }
-
-        // Initialize control block */
-        tcb.exinf = pk_ctsk.exinf;
-        tcb.tskatr = pk_ctsk.tskatr;
-        tcb.task = pk_ctsk.task;
-        tcb.ipriority = @as(u8, task.int_priority(pk_ctsk.itskpri));
-        tcb.sstksz = sstksz;
-        if (comptime config.USE_OBJECT_NAME) {
-            if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {
-                tstd.knl_strncpy(@as([]const u8, tcb.name), @as([]const u8, pk_ctsk.dsname), config.OBJECT_NAME_LENGTH);
-            }
-        }
-
-        // Set stack pointer */
-        tcb.isstack = @as(*i8, stack) + sstksz;
-
-        // Set initial value of task operation mode */
-        tcb.isysmode = 1;
-        tcb.sysmode = 1;
-
-        // make it to DORMANT state */
-        task.knl_make_dormant(tcb);
-
-        // ercd = tcb.tskid;
-
-        if (comptime config.USE_IMALLOC) {
-            // if ( (ercd < E_OK) && ((pk_ctsk.tskatr & TA_USERBUF) == 0) ) {
-            // 	knl_Ifree(stack);
-            // }
-        }
-
-        return tcb.tskid;
     }
 }
 
@@ -120,8 +122,8 @@ fn knl_del_tsk(tcb: *TCB) void {
 // if (comptime USE_FUNC_TK_DEL_TSK) {
 // * Delete task
 pub fn tk_del_tsk(tskid: u32) TkError!void {
-    check.CHECK_TSKID(tskid);
-    check.CHECK_NONSELF(tskid);
+    try check.CHECK_TSKID(tskid);
+    try check.CHECK_NONSELF(tskid);
 
     var tcb: *TCB = task.get_tcb(tskid);
 
@@ -141,24 +143,26 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 // }
 
 // * Start task
-pub fn tk_sta_tsk(tskid: u32, stacd: isize) TkError!void {
-    check.CHECK_TSKID(tskid);
-    check.CHECK_NONSELF(tskid);
+pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
+    try check.CHECK_TSKID(tskid);
+    try check.CHECK_NONSELF(tskid);
 
     var tcb: *TCB = task.get_tcb(tskid);
 
-    cpu_status.BEGIN_CRITICAL_SECTION();
-    defer cpu_status.END_CRITICAL_SECTION();
-    var state: TSTAT = @as(TSTAT, tcb.*.state);
-    if (state != TSTAT.TS_DORMANT) {
-        if (state == TSTAT.TS_NONEXIST) {
-            return TkError.ObjectNotExist;
+    {
+        cpu_status.BEGIN_CRITICAL_SECTION();
+        defer cpu_status.END_CRITICAL_SECTION();
+        var state: TSTAT = tcb.*.state;
+        if (state != TSTAT.TS_DORMANT) {
+            if (state == TSTAT.TS_NONEXIST) {
+                return TkError.ObjectNotExist;
+            } else {
+                return TkError.IncorrectObjectState;
+            }
         } else {
-            return TkError.IncorrectObjectState;
+            cpu_task.knl_setup_stacd(tcb, stacd);
+            task.knl_make_ready(tcb);
         }
-    } else {
-        cpu_task.knl_setup_stacd(tcb, stacd);
-        task.knl_make_ready(tcb);
     }
 }
 
@@ -254,8 +258,8 @@ pub fn tk_exd_tsk() void {
 pub fn tk_ter_tsk(tskid: u32) TkError!void {
     // ER	ercd = E_OK;
 
-    check.CHECK_TSKID(tskid);
-    check.CHECK_NONSELF(tskid);
+    try check.CHECK_TSKID(tskid);
+    try check.CHECK_NONSELF(tskid);
 
     var tcb: *TCB = task.get_tcb(tskid);
 
@@ -286,8 +290,8 @@ pub fn tk_ter_tsk(tskid: u32) TkError!void {
 pub fn tk_chg_pri(tskid: u32, tskpri: isize) TkError!void {
     var priority: isize = undefined;
 
-    check.CHECK_TSKID_SELF(tskid);
-    check.CHECK_PRI_INI(tskpri);
+    try check.CHECK_TSKID_SELF(tskid);
+    try check.CHECK_PRI_INI(tskpri);
 
     var tcb: *TCB = task.get_tcb_self(tskid);
 
@@ -326,7 +330,7 @@ pub fn tk_chg_pri(tskid: u32, tskpri: isize) TkError!void {
 // if (comptime USE_FUNC_TK_ROT_RDQ) {
 // * Rotate ready queue
 pub fn tk_rot_rdq(tskpri: isize) TkError!void {
-    check.CHECK_PRI_RUN(tskpri);
+    try check.CHECK_PRI_RUN(tskpri);
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
@@ -353,7 +357,7 @@ pub fn tk_get_tid() isize {
 // if (comptime USE_FUNC_TK_REF_TSK) {
 // * Refer task state */
 pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
-    check.CHECK_TSKID_SELF(tskid);
+    try check.CHECK_TSKID_SELF(tskid);
 
     var tcb: *TCB = task.get_tcb_self(tskid);
 
@@ -386,7 +390,7 @@ pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
 // if (comptime USE_FUNC_TK_REL_WAI) {
 // * Release wait */
 pub fn tk_rel_wai(tskid: u32) TkError!void {
-    check.CHECK_TSKID(tskid);
+    try check.CHECK_TSKID(tskid);
 
     var tcb: *TCB = task.get_tcb(tskid);
 

@@ -152,12 +152,12 @@ pub fn knl_get_reg(tcb: *TCB, regs: *cpudef.T_REGS, eit: *cpudef.T_EIT, cregs: *
 pub fn knl_force_dispatch() void {
     task.knl_dispatch_disabled = knlink.DDS_DISABLE_IMPLICIT;
     knlink.knl_ctxtsk = null;
-    write(sysdef.sysdepend.SCB_ICSR, sysdef.core.ICSR_PENDSVSET); // pendsv exception */
+    write(sysdef.core.SCB_ICSR, sysdef.core.ICSR_PENDSVSET); // pendsv exception */
     int.core.set_basepri(0);
 }
 
 pub fn knl_dispatch() void {
-    write(sysdef.sysdepend.SCB_ICSR, sysdef.core.ICSR_PENDSVSET); // pendsv exception */
+    write(sysdef.core.SCB_ICSR, sysdef.core.ICSR_PENDSVSET); // pendsv exception */
 }
 
 // } // CPU_CORE_ARMV7M */

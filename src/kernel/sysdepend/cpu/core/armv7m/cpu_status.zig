@@ -15,7 +15,7 @@ pub inline fn BEGIN_CRITICAL_SECTION() void {
 }
 
 pub inline fn END_CRITICAL_SECTION() void {
-    if (!syslib.core.isDI(_basepri_) and knlink.knl_ctxtsk != knlink.knl_schedtsk and !knlink.knl_dispatch_disabled) {
+    if (!syslib.core.isDI(_basepri_) and knlink.knl_ctxtsk != knlink.knl_schedtsk and !knlink.task.knl_dispatch_disabled) {
         cpu_cntl.knl_dispatch();
     }
     int.core.set_basepri(_basepri_);
@@ -80,7 +80,7 @@ pub inline fn in_indp() bool {
 // When a system call is called during dispatch disable, true
 //Also include the task independent part as during dispatch disable.
 pub inline fn in_ddsp() bool {
-    return (knlink.knl_dispatch_disabled or in_indp() or syslib.core.isDI(int.get_basepri()));
+    return (knlink.task.knl_dispatch_disabled or in_indp() or syslib.core.isDI(int.get_basepri()));
 }
 
 // When a system call is called during CPU lock (interrupt disable), true

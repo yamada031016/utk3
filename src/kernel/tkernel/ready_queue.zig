@@ -39,15 +39,15 @@ const NUM_BITMAP = (knldef.NUM_TSKPRI + BITMAPSZ - 1) / BITMAPSZ;
 pub fn RdyQueue() type {
     return struct {
         const This = @This();
-        const Node = struct {
-            data: *TCB,
-            next: ?*Node,
-            prev: ?*Node,
-        };
-        start: ?*Node,
-        end: ?*Node,
+        // const Node = struct {
+        //     data: *TCB,
+        //     next: ?*Node,
+        //     prev: ?*Node,
+        // };
+        start: ?*TCB.Node,
+        end: ?*TCB.Node,
         top_priority: PRI, // Highest priority in ready queue */
-        tskque: [knldef.NUM_TSKPRI]?*Node, // Task queue per priority */
+        tskque: [knldef.NUM_TSKPRI]?*TCB.Node, // Task queue per priority */
         bitmap: [NUM_BITMAP]usize, // Bitmap area per priority */
         klocktsk: ?*TCB, // READY task with kernel lock */
 
@@ -60,7 +60,7 @@ pub fn RdyQueue() type {
                 .start = null,
                 .end = null,
                 .top_priority = knldef.NUM_TSKPRI,
-                .tskque = [_]?*Node{null} ** knldef.NUM_TSKPRI,
+                .tskque = [_]?*TCB.Node{null} ** knldef.NUM_TSKPRI,
                 .klocktsk = null,
                 .bitmap = [NUM_BITMAP]usize{0},
             };
@@ -87,20 +87,20 @@ pub fn RdyQueue() type {
         // *	update 'top_priority' if necessary. When updating 'top_priority,'
         // *	return TRUE, otherwise FALSE.
         pub fn insert(this: *This, tcb: *TCB) bool {
-            var priority: PRI = tcb.priority;
+            const priority: usize = tcb.priority;
 
             // queue.QueInsert(&tcb.tskque, rq.tskque[priority]);
             if (this.tskque[priority]) |elem| {
-                tcb.tskque.*.prev = elem.*.prev;
-                tcb.tskque.*.next = elem;
-                elem.*.prev.?.*.next.? = &tcb.tskque;
-                elem.*.prev.? = &tcb.tskque;
+                tcb.tskque.?.*.prev = elem.*.prev;
+                tcb.tskque.?.*.next = elem;
+                elem.*.prev.?.*.next = tcb.tskque;
+                elem.*.prev = tcb.tskque;
             } else {
-                this.tskque[priority] = &tcb.tskque;
+                this.tskque[priority] = tcb.tskque;
             }
 
             if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-                this.bitmap[0] |= (1 << priority);
+                this.bitmap[0] |= 1 << priority;
             } else {
                 tstd.knl_bitset(this.bitmap, priority);
             }

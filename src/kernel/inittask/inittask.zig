@@ -8,6 +8,13 @@ const print = @import("devices").serial.print;
 const hw_setting = knlink.sysdepend.hw_setting;
 const syscall = @import("libtk").syscall;
 
+const init_task_stack: [INITTASK_STKSZ / @sizeOf(isize)]isize = undefined;
+
+const INITTASK_EXINF = 0x0;
+const INITTASK_ITSKPRI = 1;
+const INITTASK_DSNAME = "inittsk";
+const INITTASK_TSKATR = if (config.USE_IMALLOC) syscall.TA_HLNG | syscall.TA_RNG0 else syscall.TA_HLNG | syscall.TA_RNG0 | syscall.TA_USERBUF;
+const INITTASK_STACK = if (config.USE_IMALLOC) null else init_task_stack;
 const INITTASK_STKSZ = 1 * 1024;
 
 fn init_task_main() TkError!void {
@@ -39,21 +46,19 @@ fn init_task_main() TkError!void {
 }
 
 // if (comptime !config.USE_IMALLOC) {
-pub var init_task_stack: [INITTASK_STKSZ / @sizeOf(isize)]isize = undefined;
 // }
 
 // Initial task creation parameter
-// pub const knl_init_ctsk = syscall.T_CTSK{
-//     .exinf = @as(?*void, @ptrFromInt(inittask.INITTASK_EXINF))[0], // exinf
-//     .tskatr = inittask.INITTASK_TSKATR, // tskatr
-//     .task = &init_task_main, // task
-//     .itskpri = inittask.INITTASK_ITSKPRI, // itskpri
-//     .stksz = inittask.INITTASK_STKSZ, // stksz
-//     // if (comptime USE_OBJECT_NAME){
-//     // 	.dsname = INITTASK_DSNAME,		// dsname
-//     //     }
-//     .bufptr = @as(*void, @ptrFromInt(inittask.INITTASK_STACK)), // bufptr
-// };
+pub const knl_init_ctsk = syscall.T_CTSK{
+    // .exinf = @as(?*anyopaque, @ptrFromInt(inittask.INITTASK_EXINF))[0], // exinf
+    .exinf = @as(?*anyopaque, @ptrFromInt(INITTASK_EXINF)), // exinf
+    .tskatr = INITTASK_TSKATR, // tskatr
+    .task = @ptrCast(@alignCast(@constCast(&init_task_main))), // task
+    .itskpri = INITTASK_ITSKPRI, // itskpri
+    .stksz = INITTASK_STKSZ, // stksz
+    // .dsname = if (config.USE_OBJECT_NAME) INITTASK_DSNAME else undefined, // dsname
+    .bufptr = @as(*void, @ptrCast(@constCast(&INITTASK_STACK[0]))), // bufptr
+};
 
 // Start System
 //	Start each subsystem and each device driver.
@@ -64,9 +69,7 @@ fn start_system() TkError!void {
         //     return err;
         // };
     }
-    devinit.knl_start_device() catch |err| {
-        return err;
-    };
+    devinit.knl_start_device();
 }
 
 // Stop System

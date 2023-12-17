@@ -1,6 +1,7 @@
 //micro T-Kernel System Calls */
 //
 const TkError = @import("libtk").errno.TkError;
+const PRI = @import("libtk").typedef.PRI;
 
 // Task creation */
 pub const TSK_SELF = 0; // Its own task specify */
@@ -34,19 +35,6 @@ pub const TTSTAT = enum(usize) {
 };
 
 // Wait factor tskwait */
-// pub const TTW_SLP = 0x00000001; // Wait caused by wakeup wait */
-// pub const TTW_DLY = 0x00000002; // Wait caused by task delay */
-// pub const TTW_SEM = 0x00000004; // Semaphore wait */
-// pub const TTW_FLG = 0x00000008; // Event flag wait */
-// pub const TTW_MBX = 0x00000040; // Mail box wait */
-// pub const TTW_MTX = 0x00000080; // Mutex wait */
-// pub const TTW_SMBF = 0x00000100; // Message buffer send wait */
-// pub const TTW_RMBF = 0x00000200; // Message buffer receive wait */
-// pub const TTW_CAL = 0x00000400; // Rendezvous call wait */
-// pub const TTW_ACP = 0x00000800; // Rendezvous accept wait */
-// pub const TTW_RDV = 0x00001000; // Rendezvous end wait */
-// pub const TTW_MPF = 0x00002000; // Fixed size memory pool wait */
-// pub const TTW_MPL = 0x00004000; // Variable size memory pool wait */
 pub const TTW = enum(u8) {
     SLP = 0x00000001, // Wait caused by wakeup wait */
     DLY = 0x00000002, // Wait caused by task delay */
@@ -72,7 +60,7 @@ pub const TA_CNT = 0x00000002; // Give priority to task whose request counts is 
 
 // Mutex */
 // pub const TA_TFIFO=0x00000000UL;// Manage wait task by FIFO */
-// pub const TA_Tisize=	0x00000001UL;// Manage wait task by priority order */
+// pub const TA_TPRI=	0x00000001UL;// Manage wait task by priority order */
 // pub const TA_INHERIT=0x00000002UL;// Priority inherited protocol */
 // pub const TA_CEILING=0x00000003UL;// Upper limit priority protocol */
 // pub const TA_DSNAME	0x00000040UL;// Use object name */
@@ -85,22 +73,18 @@ pub const TA_CNT = 0x00000002; // Give priority to task whose request counts is 
 // pub const TA_DSNAME=0x00000040UL;// Use object name */
 
 // Event flag wait mode */
-pub const TWF_ANDW = 0x00000000; // AND wait */
-pub const TWF_ORW = 0x00000001; // OR wait */
-pub const TWF_CLR = 0x00000010; // All clear specify */
-pub const TWF_BITCLR = 0x00000020; // Only condition bit clear specify */
-// pub const TWF = enum {
-// ANDW=0x00000000,// AND wait */
-// ORW=0x00000001,// OR wait */
-// CLR=0x00000010,// All clear specify */
-// BITCLR=0x00000020,// Only condition bit clear specify */
-// };
+pub const TWF = enum(usize) {
+    ANDW = 0x00000000, // AND wait */
+    ORW = 0x00000001, // OR wait */
+    CLR = 0x00000010, // All clear specify */
+    BITCLR = 0x00000020, // Only condition bit clear specify */
+};
 
 // Mail box */
 // pub const TA_TFIFO=0x00000000;// Manage wait task by FIFO */
 // pub const TA_TPRI=0x00000001;// Manage wait task by priority order */
-pub const TA_MFIFO = 0x00000000; // Manage messages by FIFO */
-pub const TA_MPRI = 0x00000002; // Manage messages by priority order */
+// pub const TA_MFIFO = 0x00000000; // Manage messages by FIFO */
+// pub const TA_MPRI = 0x00000002; // Manage messages by priority order */
 // pub const TA_DSNAME=0x00000040;// Use object name */
 
 // Message buffer */
@@ -179,15 +163,16 @@ pub const TPW_ENALOWPOW = 3; // Power-saving mode switch enable */
 // Task creation information 		tk_cre_tsk */
 pub const T_CTSK = struct {
     // zero-pointerも許したい addressが0x0の場合
-    exinf: ?*void, // Extended information */
+    exinf: ?*anyopaque, // Extended information */
     tskatr: u32, // Task attribute */
-    task: *const fn () TkError!void, // Task startup address */
-    itskpri: isize, // Priority at task startup */
+    // task: *const fn () TkError!void, // Task startup address */
+    task: *usize, // Task startup address */
+    itskpri: PRI, // Priority at task startup */
     stksz: isize, // User stack size (byte) */
-    // if (comptime  USE_OBJECT_NAME) {
+    // if (comptime  config.USE_OBJECT_NAME) {
     //     dsname: [OBJECT_NAME_LENGTH]u8,	// Object name */
     // }
-    bufptr: *void, // User buffer */
+    bufptr: *anyopaque, // User buffer */
 };
 
 // Task state information 		tk_ref_tsk */

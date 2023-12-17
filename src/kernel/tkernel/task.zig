@@ -3,9 +3,10 @@
 // *	Can check with 'state & TS_WAIT' whether the task is in the wait state.
 // *	Can check with 'state & TS_SUSPEND' whether the task is in the forced
 // *	wait state.
+const config = @import("config");
 const knlink = @import("knlink");
 const ready_queue = knlink.rdy_que;
-const cpu_task = knlink.sysdepend.cpu_task;
+const cpu_task = knlink.sysdepend.core.cpu_task;
 const TCB = knlink.TCB;
 const libsys = @import("libsys");
 const knldef = libsys.knldef;
@@ -27,14 +28,16 @@ pub const TSTAT = enum(u8) {
     TS_DORMANT = 8, // DORMANT state */
 };
 
+pub export var knl_dispatch_disabled: bool = false;
+
 // * If the task is alive ( except NON-EXISTENT,DORMANT ), return TRUE.
 pub inline fn knl_task_alive(state: TSTAT) bool {
     return (state & (TSTAT.TS_READY | TSTAT.TS_WAIT | TSTAT.TS_SUSPEND)) != 0;
 }
 
 // * Task priority internal/external expression conversion macro
-pub fn int_priority(x: PRI) isize {
-    return (@as(isize, x) - knldef.MIN_TSKPRI);
+pub fn int_priority(x: PRI) PRI {
+    return (@as(PRI, x) - knldef.MIN_TSKPRI);
 }
 pub fn ext_tskpri(x: PRI) isize {
     return (@as(isize, x) + knldef.MIN_TSKPRI);
@@ -42,12 +45,13 @@ pub fn ext_tskpri(x: PRI) isize {
 
 // * Task control information
 pub const knl_tcb_table: [knldef.NUM_TSKID]*TCB = undefined; // Task control block */
-pub var knl_free_tcb = TkQueue(*TCB.Node).init();
+pub var knl_free_tcb = TkQueue(*TCB).init();
 
 // * Get TCB from task ID.
-pub fn get_tcb(id: isize) TCB {
-    return (knl_tcb_table[knldef.INDEX_TSK(id)]);
+pub fn get_tcb(id: usize) *TCB {
+    return knl_tcb_table[knldef.INDEX_TSK(id)];
 }
+
 pub fn get_tcb_self(id: isize) TCB {
     if (id == syscall.TSK_SELF) {
         return knlink.knl_ctxtsk.?.*;
@@ -124,7 +128,7 @@ pub fn knl_task_initialize() TkError!void {
     knlink.knl_schedtsk = null;
     // knl_ready_queueはinit済み
     // ready_queue.RdyQueue().init();
-    knlink.knl_dispatch_disabled = knlink.DDS_ENABLE;
+    knl_dispatch_disabled = knlink.DDS_ENABLE;
     var tcb_tbl: [knldef.NUM_TSKID]*TCB = knl_tcb_table;
     _ = tcb_tbl;
     var tskid: isize = undefined;
@@ -165,16 +169,16 @@ pub fn knl_make_dormant(tcb: *TCB) void {
     tcb.klockwait = false;
     tcb.klocked = false;
 
-    // if (comptime USE_DBGSPT and defined(USE_FUNC_TD_INF_TSK)) {
+    // if (comptime config.USE_DBGSPT and defined(USE_FUNC_TD_INF_TSK)) {
     //     tcb.stime = 0;
     //     tcb.utime = 0;
     // }
 
-    tcb.wercd = null;
+    tcb.wercd = undefined;
 
-    // if (comptime USE_MUTEX) {
-    //     tcb.mtxlist = null;
-    // }
+    if (comptime config.func.USE_MUTEX) {
+        tcb.mtxlist = null;
+    }
     // Set context to start task */
     cpu_task.knl_setup_context(tcb);
 }

@@ -11,9 +11,6 @@ pub fn knl_start_device() void {
         if (config.dev.DEVCNF_USE_SER) {
             const dummy = 1; //USART2指定
             serial.dev_init_serial(dummy);
-            // serial.dev_init_serial(dummy) catch |err| {
-            //     return err;
-            // };
         }
     }
 }
