@@ -25,33 +25,27 @@ const PRI = libtk.typedef.PRI;
 const TkQueue = queue.TkQueue;
 
 pub const TCB = struct {
+    const This = @This();
     pub const Node = struct {
-        const This = @This();
-        data: *TCB,
+        // data: *TCB,
         next: ?*This,
         prev: ?*This,
     };
     tskque: ?*Node,
-    // tskque: ?*queue.QueNode(*TCB), // Task queue */
     tskid: usize, // Task isize */
     exinf: ?*anyopaque, // Extended information */
     tskatr: u32, // Task attribute */
     task: *usize, // Task startup address */
     tskctxb: sysdepend.core.CTXB, // Task context block */
-    sstksz: i32, // stack size */
-
+    sstksz: usize, // stack size */
     isysmode: i8, // Task operation mode initial value */
     sysmode: i16, // Task operation mode, quasi task part call level */
-
     ipriority: PRI, // Priority at task startup */
     bpriority: PRI, // Base priority */
     priority: PRI, // Current priority */
-
     state: task.TSTAT, // Task state (Int. expression) */
-
     klockwait: bool = true, // true at wait kernel lock */
     klocked: bool = true, // true at hold kernel lock */
-
     // wspec: *const winfo.WSPEC, // Wait specification */
     wid: isize, // Wait object isize */
     wupcnt: isize, // Number of wakeup requests queuing */
@@ -59,9 +53,7 @@ pub const TCB = struct {
     wercd: libtk.errno.TkError, // Wait error code set area */
     // winfo: winfo.WINFO, // Wait information */
     // wtmeb: timer.TMEB, // Wait timer event block */
-
-    isstack: *anyopaque, // stack pointer initial value */
-
+    isstack: *sysdepend.core.cpu_task.SStackFrame, // stack pointer initial value */
     // if (comptime (USE_LEGACY_API and USE_RENDEZVOUS)){
     //     wrdvno: RNO, // For creating rendezvous number */
     // }

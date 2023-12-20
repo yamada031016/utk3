@@ -8,6 +8,9 @@ const sysdef = libsys.sysdepend.sysdef;
 const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
 const print = @import("devices").serial.print;
+const serial = @import("devices").serial;
+const hexdump = serial.hexdump;
+const intPrint = serial.intPrint;
 
 // if (comptime  CPU_CORE_ARMV7M) {
 extern const __data_org: usize;
@@ -21,52 +24,78 @@ extern const __bss_end: usize;
 // }
 
 extern const vector_tbl: VectorTable;
+// extern const __vector_org: usize;
 
 export fn Reset_Handler() callconv(.C) noreturn {
-    comptime var i = 0;
-    _ = i;
-
     // Startup Hardware
     hw_setting.knl_startup_hw();
     knlink.sysdepend.devinit.knl_start_device();
 
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
-        var src: *u32 = @ptrCast(@constCast(&vector_tbl));
-        _ = src;
-        // var top: *u32 = @ptrCast(@constCast(&interrupt.exchdr_tbl));
+        var src: *volatile usize = @as(*volatile usize, @ptrCast(@constCast((&vector_tbl))));
+        // var top: *volatile usize = @ptrCast(@alignCast(@constCast(&interrupt.exchdr_tbl)));
+        var top: *volatile usize = @ptrFromInt(0x2000_0000);
 
-        // for (i..sysdef.cpu.N_SYSVEC + sysdef.cpu.N_INTVEC) |_| {
-        //     top.* += 1;
-        //     src.* += 1;
-        //     top.* = src.*;
-        // }
+        // for (0..sysdef.cpu.N_SYSVEC + sysdef.cpu.N_INTVEC) |_| {
+        for (0..@sizeOf(VectorTable)) |_| {
+            top = @ptrFromInt(@intFromPtr(top) + @sizeOf(usize));
+            src = @ptrFromInt(@intFromPtr(src) + @sizeOf(usize));
+            top.* = src.*;
+        }
 
         // Set Vector Table offset to SRAM
-        // @as(*volatile u32, @ptrFromInt(sysdef.core.SCB_VTOR)).* = @as(u32, interrupt.exchdr_tbl[0]);
+        // @as(*volatile usize, @ptrFromInt(sysdef.core.SCB_VTOR)).* = interrupt.exchdr_tbl[0];
     }
 
     // Load .data to ram
     var data_src = @as(*volatile usize, @ptrCast(&__data_org));
     var data_top = @as(*volatile usize, @ptrCast(&__data_start));
     var data_end: *volatile usize = @as(*volatile usize, @ptrCast(&__data_end));
+
+    // hexdump("&__data_org", @intFromPtr(&__data_org));
+    // hexdump("data_src", @intFromPtr(data_src));
+    // hexdump("&__data_start", @intFromPtr(&__data_start));
+    // hexdump("&__data_end", @intFromPtr(&__data_end));
+    // hexdump("&__bss_start", @intFromPtr(&__bss_start));
+    // hexdump("&__bss_end", @intFromPtr(&__bss_end));
+
+    // hexdump("data_src", data_src.*);
+    // hexdump("before data_end", data_end.*);
+    // hexdump("before data_top addr", @intFromPtr(data_top));
+    // hexdump("before data_end addr", @intFromPtr(data_end));
     while (data_top != data_end) {
-        data_top.* += 1;
-        data_src.* += 1;
+        data_top = @as(*volatile usize, @ptrFromInt(@intFromPtr(data_top) + @sizeOf(usize)));
+        data_src = @as(*volatile usize, @ptrFromInt(@intFromPtr(data_src) + @sizeOf(usize)));
+        // hexdump("data_top", @intFromPtr(data_top));
+        // hexdump("data_src", @intFromPtr(data_src));
         data_top.* = data_src.*;
+    } else {
+        // hexdump("after data_src", data_src.*);
+        // hexdump("after data_top", data_top.*);
+        // hexdump("after data_end", data_end.*);
+        // hexdump("after data_top addr", @intFromPtr(data_top));
+        // hexdump("after data_end addr", @intFromPtr(data_end));
     }
+    print("Reset_Handler!!!.");
 
     // Initialize .bss
-    if (comptime config.USE_NOINIT) {
-        // top = @ptrCast(&__noinit_end);
-    } else {
-        // top = @as(*u32, @ptrCast(@alignCast(__bss_start)));
-    }
-    // i = @divExact((@as(isize, @intCast(__bss_end.*)) - @as(isize, @intCast(top.*))), @sizeOf(u32));
-    // while (i > 0) : (i -= 1) {
-    //     top.* += 1;
-    //     top.* = 0;
+    // if (comptime config.USE_NOINIT) {
+    // top = @ptrCast(&__noinit_end);
+    // } else {
+    var bss_top = @as(*volatile usize, @ptrCast(&__bss_start));
+    // hexdump("__bss_start", @intFromPtr(&__bss_start));
+    // hexdump("__bss_end", @intFromPtr(&__bss_end));
     // }
+    var i = @intFromPtr(&__bss_end) - @intFromPtr(bss_top);
+    i /= 8;
+    // hexdump("i", @truncate(i / 4));
+    // hexdump("i", i);
+    while (i > 0) : (i -= 1) {
+        // bss_top = @ptrFromInt(@intFromPtr(bss_top) + @sizeOf(usize));
+        bss_top = @ptrFromInt(@intFromPtr(bss_top) + 8);
+        bss_top.* = 0;
+    }
 
     if (comptime config.USE_IMALLOC) {
         //     // Set System memory area
@@ -102,14 +131,12 @@ export fn Reset_Handler() callconv(.C) noreturn {
 
     // Startup Kernel
     sysinit.main() catch |err| {
-        @import("devices").serial.print("sysinit error!");
+        // errをごまかす苦肉の策
         switch (err) {
             else => print("Reset Handler failed."),
         }
     };
     unreachable;
-    // while (1)
-    //   ; // guard - infinite loops
 }
 
 // } // CPU_CORE_ARMV7M

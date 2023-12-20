@@ -17,19 +17,23 @@ const syscall = libtk.syscall;
 const TkError = libtk.errno.TkError;
 const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
-const print = @import("devices").serial.print;
+const serial = @import("devices").serial;
+const print = serial.print;
 const config = @import("config");
 const ATR = libtk.typedef.ATR;
 const PRI = libtk.typedef.PRI;
 
 // * Create task
 pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
+    print("tk_cre_tsk start.");
+    defer print("tk_cre_tsk end.");
+    errdefer print("tk_cre_tsk failed.");
     // Valid value of task attribute */
     var VALID_TSKATR: ATR = if (comptime config.CHK_RSATR) syscall.TA_HLNG | syscall.TA_RNG3 | syscall.TA_USERBUF | syscall.TA_COPS else undefined;
     if (comptime (config.CHK_RSATR and config.USE_OBJECT_NAME)) {
         VALID_TSKATR |= syscall.TA_DSNAME;
     }
-    var sstksz: isize = undefined;
+    var sstksz: usize = undefined;
     var stack: *anyopaque = undefined;
 
     try check.CHECK_RSATR(pk_ctsk.tskatr, VALID_TSKATR);
@@ -49,7 +53,8 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
         if (comptime config.USE_IMALLOC) {
             // Allocate system stack area */
             sstksz = pk_ctsk.stksz + sysdef.core.DEFAULT_SYS_STKSZ;
-            sstksz = (sstksz + 7) / 8 * 8; // Align to a multiple of 8 */
+            sstksz = (sstksz + 7) & ~@as(usize, @intCast(0x07)); // Align to a multiple of 8 */
+            // sstksz = (sstksz + 7) / 8 * 8; // Align to a multiple of 8 */
             // stack = knl_Imalloc(@as(u32, sstksz));
             if (stack == null) {
                 return TkError.InsufficientMemory;
@@ -60,9 +65,23 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
     {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
+
         // Get control block from FreeQue */
-        var free_tcb: ?*TCB = @as(?*TCB, task.knl_free_tcb.dequeueNext());
+        // var free_tcb: ?*TCB.Node = @as(?*TCB, task.knl_free_tcb);
+        print("free_tcb before");
+        const free_tcb: ?*TCB = free_tcb: {
+            if (task.knl_free_tcb.dequeue()) |_free_tcb| {
+                print("return tcb in :free_tcb:");
+                break :free_tcb _free_tcb;
+            } else {
+                print("return null in :free_tcb:");
+                // return TkError.ExceedSystemLimits;
+                break :free_tcb null;
+            }
+        };
+        print("free_tcb after");
         if (free_tcb) |tcb| {
+            serial.intPrint("free tskid", tcb.tskid);
             // Initialize control block */
             tcb.exinf = pk_ctsk.exinf;
             tcb.tskatr = pk_ctsk.tskatr;
@@ -76,17 +95,16 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
             }
 
             // Set stack pointer */
-            const tmp: isize = @as(isize, @intCast(@intFromPtr(stack))) + sstksz;
-            tcb.isstack = @ptrFromInt(@as(usize, @intCast(tmp)));
-            // tcb.isstack = @as(*volatile u8, @ptrCast(stack)) + sstksz;
+            // const tmp: isize = @as(isize, @intCast(@intFromPtr(stack))) + sstksz;
+            const tmp: usize = @intFromPtr(stack) + sstksz;
+            tcb.isstack = @ptrFromInt(tmp);
+            print("after set stack pointer");
 
             // Set initial value of task operation mode */
             tcb.isysmode = 1;
             tcb.sysmode = 1;
             // make it to DORMANT state */
             task.knl_make_dormant(tcb);
-
-            // ercd = tcb.tskid;
 
             if (comptime config.USE_IMALLOC) {
                 // if ( (ercd < E_OK) && ((pk_ctsk.tskatr & TA_USERBUF) == 0) ) {
@@ -96,7 +114,6 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
 
             return tcb.tskid;
         } else {
-            cpu_status.END_CRITICAL_SECTION();
             return TkError.ExceedSystemLimits;
         }
     }
@@ -144,8 +161,15 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 
 // * Start task
 pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
-    try check.CHECK_TSKID(tskid);
-    try check.CHECK_NONSELF(tskid);
+    print("tk_sta_tsk start.");
+    defer print("tk_sta_tsk end.");
+    errdefer print("tk_sta_tsk failed.");
+    check.CHECK_TSKID(tskid) catch |err| {
+        return err;
+    };
+    check.CHECK_NONSELF(tskid) catch |err| {
+        return err;
+    };
 
     var tcb: *TCB = task.get_tcb(tskid);
 

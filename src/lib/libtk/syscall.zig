@@ -168,7 +168,7 @@ pub const T_CTSK = struct {
     // task: *const fn () TkError!void, // Task startup address */
     task: *usize, // Task startup address */
     itskpri: PRI, // Priority at task startup */
-    stksz: isize, // User stack size (byte) */
+    stksz: usize, // User stack size (byte) */
     // if (comptime  config.USE_OBJECT_NAME) {
     //     dsname: [OBJECT_NAME_LENGTH]u8,	// Object name */
     // }

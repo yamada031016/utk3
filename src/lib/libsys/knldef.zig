@@ -48,13 +48,13 @@ pub const MIN_TSKID = 1;
 pub const MAX_TSKID = config.CNF_MAX_TSKID;
 pub const NUM_TSKID = MAX_TSKID;
 pub fn CHK_TSKID(id: ID) bool {
-    return (MIN_TSKPRI <= id and id <= MAX_TSKPRI);
+    return MIN_TSKID <= id and id <= MAX_TSKID;
 }
 pub fn INDEX_TSK(id: ID) usize {
-    return (id - MIN_TSKPRI);
+    return id - MIN_TSKID;
 }
-pub fn ID_TSK(index: isize) isize {
-    return (index + MIN_TSKPRI);
+pub fn ID_TSK(index: usize) usize {
+    return index + MIN_TSKID;
 }
 
 // Semaphore configuration */

@@ -3,6 +3,7 @@ const syslib = libtk.syslib;
 const int = libtk.sysdepend.int;
 const sysdef = @import("libsys").sysdepend.sysdef;
 const write = syslib.cpu.write;
+const serial = @import("devices").serial;
 
 // * Disable interrupt for NVIC
 pub fn DisableInt_nvic(intno: usize) void {
@@ -27,19 +28,22 @@ pub fn CheckInt_nvic(intno: usize) bool {
 
 //Set Base Priority register
 pub fn set_basepri(intsts: u32) void {
-    asm volatile ("msr basepri, %0"
-        :
-        : [ret] "r" (intsts),
-    );
+    serial.print("set_basepri() start");
+    defer serial.print("set_basepri() end");
+    _ = intsts;
+    // asm volatile ("msr basepri, %0"
+    //     :
+    //     : [ret] "r" (intsts),
+    // );
 }
 
 // Get Base Priority register
 pub fn get_basepri() u32 {
     var basepri: u32 = undefined;
 
-    asm volatile ("mrs %0, basepri"
-        : [ret] "=r" (basepri),
-    );
+    // asm volatile ("mrs %0, basepri"
+    //     : [ret] "=r" (basepri),
+    // );
     return basepri;
 }
 
@@ -48,13 +52,14 @@ pub fn disint() u32 {
     var intsts: u32 = 0;
 
     var maxint: u32 = sysdef.core.INTPRI_VAL(sysdef.cpu.INTPRI_MAX_EXTINT_PRI);
-    asm volatile ("mrs %0, basepri"
-        : [ret] "=r" (intsts),
-    );
-    asm volatile ("msr basepri, %0"
-        :
-        : [ret] "r" (maxint),
-    );
+    _ = maxint;
+    // asm volatile ("mrs %0, basepri"
+    //     : [ret] "=r" (intsts),
+    // );
+    // asm volatile ("msr basepri, %0"
+    //     :
+    //     : [ret] "r" (maxint),
+    // );
 
     return intsts;
 }

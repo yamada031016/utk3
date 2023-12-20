@@ -4,11 +4,12 @@ const devinit = knlink.sysdepend.devinit;
 const inittask = knlink.inittask;
 const usermain = knlink.usermain.usermain;
 const TkError = @import("libtk").errno.TkError;
-const print = @import("devices").serial.print;
 const hw_setting = knlink.sysdepend.hw_setting;
 const syscall = @import("libtk").syscall;
+const serial = @import("devices").serial;
+const print = serial.print;
 
-const init_task_stack: [INITTASK_STKSZ / @sizeOf(isize)]isize = undefined;
+const init_task_stack: [INITTASK_STKSZ / @sizeOf(isize)]isize = [_]isize{1} ** 256;
 
 const INITTASK_EXINF = 0x0;
 const INITTASK_ITSKPRI = 1;
@@ -17,8 +18,9 @@ const INITTASK_TSKATR = if (config.USE_IMALLOC) syscall.TA_HLNG | syscall.TA_RNG
 const INITTASK_STACK = if (config.USE_IMALLOC) null else init_task_stack;
 const INITTASK_STKSZ = 1 * 1024;
 
-fn init_task_main() TkError!void {
+pub fn init_task_main() TkError!void {
     var fin: i32 = 1;
+    print("inittask!");
     // Start Sub-system & device driver
     if (start_system()) {
         if (comptime config.USE_SYSTEM_MESSAGE and config.USE_TMONITOR) {
@@ -54,10 +56,11 @@ pub const knl_init_ctsk = syscall.T_CTSK{
     .exinf = @as(?*anyopaque, @ptrFromInt(INITTASK_EXINF)), // exinf
     .tskatr = INITTASK_TSKATR, // tskatr
     .task = @ptrCast(@alignCast(@constCast(&init_task_main))), // task
+    // .task = @as(*usize, @ptrFromInt(@intFromPtr(&init_task_main))),
     .itskpri = INITTASK_ITSKPRI, // itskpri
     .stksz = INITTASK_STKSZ, // stksz
     // .dsname = if (config.USE_OBJECT_NAME) INITTASK_DSNAME else undefined, // dsname
-    .bufptr = @as(*void, @ptrCast(@constCast(&INITTASK_STACK[0]))), // bufptr
+    .bufptr = @as(*anyopaque, @ptrCast(@constCast(&INITTASK_STACK[0]))), // bufptr
 };
 
 // Start System

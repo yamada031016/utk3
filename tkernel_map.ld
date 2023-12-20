@@ -47,7 +47,7 @@ SECTIONS {
 		. = ALIGN(4);
 		__data_end = .;
 	} >RAM
-	.bss ALIGN(4) (NOLOAD) : {
+	.bss ALIGN(8) (NOLOAD) : {
 		__bss_start = .;
 		PROVIDE (__noinit_start = .);
 		*(.noinit)

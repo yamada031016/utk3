@@ -18,6 +18,8 @@ const TkError = libtk.errno.TkError;
 const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
 const PRI = libtk.typedef.PRI;
+const serial = @import("devices").serial;
+const print = serial.print;
 
 pub const TSTAT = enum(u8) {
     TS_NONEXIST = 0, // Unregistered state */
@@ -44,8 +46,37 @@ pub fn ext_tskpri(x: PRI) isize {
 }
 
 // * Task control information
-pub const knl_tcb_table: [knldef.NUM_TSKID]*TCB = undefined; // Task control block */
-pub var knl_free_tcb = TkQueue(*TCB).init();
+pub const knl_tcb_table: [knldef.NUM_TSKID]*TCB = tcb_table: {
+    var tmp: [knldef.NUM_TSKID]*TCB = undefined;
+    for (0..knldef.NUM_TSKID) |i| {
+        var dummy: *TCB = undefined;
+        var dummy_stack: *knlink.sysdepend.core.cpu_task.SStackFrame = undefined;
+        var tcb = TCB{
+            .tskque = @constCast(&TCB.Node{ .next = dummy, .prev = null }),
+            // .tskque = null,
+            .tskid = i + 1,
+            .task = @as(*usize, @ptrCast(&dummy)),
+            .exinf = null,
+            .tskatr = 999,
+            .tskctxb = knlink.sysdepend.core.CTXB{ .ssp = @ptrCast(&dummy_stack) },
+            .sstksz = 999,
+            .isysmode = 127,
+            .sysmode = 999,
+            .ipriority = 32,
+            .bpriority = 32,
+            .priority = 32, //min Pri
+            .state = TSTAT.TS_DORMANT,
+            .wid = 999,
+            .wupcnt = 999,
+            .suscnt = 999,
+            .wercd = TkError.SystemError,
+            .isstack = @ptrCast(&dummy_stack),
+        };
+        tmp[i] = &tcb;
+    }
+    break :tcb_table tmp;
+};
+pub var knl_free_tcb = TkQueue(?*TCB).init();
 
 // * Get TCB from task ID.
 pub fn get_tcb(id: usize) *TCB {
@@ -117,7 +148,9 @@ pub inline fn knl_reschedule() void {
 
 // * TCB Initialization
 pub fn knl_task_initialize() TkError!void {
-    errdefer @import("devices").serial.print("knl_task_initialize() failed");
+    print("knl_task_initialize() start.");
+    defer print("knl_task_initialize() end");
+    errdefer print("knl_task_initialize() failed");
     // Get system information */
     if (knldef.NUM_TSKID < 1) {
         return TkError.SystemError;
@@ -129,35 +162,36 @@ pub fn knl_task_initialize() TkError!void {
     // knl_ready_queueはinit済み
     // ready_queue.RdyQueue().init();
     knl_dispatch_disabled = knlink.DDS_ENABLE;
-    var tcb_tbl: [knldef.NUM_TSKID]*TCB = knl_tcb_table;
-    _ = tcb_tbl;
-    var tskid: isize = undefined;
-    _ = tskid;
+    // var tcb_tbl: [knldef.NUM_TSKID]*TCB = knl_tcb_table;
 
     // Register all TCBs onto FreeQue */
-    // knl_free_tcb = queue.TkQueue(*TCB.Node).init();
-    var FreeQue = TkQueue(*TCB.Node).init();
-    _ = FreeQue;
+    // knl_free_tcb = queue.TkQueue(*TCB).init();
+    // var FreeQue = TkQueue(*TCB).init();
     // 多分tcb_tblがundefinedなせいでtcbにアクセスすると関数がpanic?になる
     // エラーも出ないのでsysinitに制御が戻っていないと思う
     // 必要になるまで下記の処理を封印する
-
-    // for (tcb_tbl, 0..) |tcb, i| {
-    //     tskid = knldef.ID_TSK(@intCast(i));
-    //     tcb.tskid = tskid;
-    //     tcb.state = TSTAT.TS_NONEXIST;
-    //     // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
-    //     //     tcb.wrdvno = tskid;
-    //     // }
-    //     if (tcb.tskque != null) {
-    //         knl_free_tcb.enqueue(tcb.tskque.?);
-    //         FreeQue.enqueue(tcb.tskque.?);
-    //     }
-    // }
+    // print("for loop before");
+    for (knl_tcb_table, 0..32) |tcb, i| {
+        // serial.intPrint("for loop", i);
+        tcb.tskid = knldef.ID_TSK(i);
+        // serial.intPrint("tskid", tcb.tskid);
+        // try knlink.check.CHECK_TSKID(tcb.tskid);
+        tcb.state = TSTAT.TS_NONEXIST;
+        // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
+        //     tcb.wrdvno = tskid;
+        // }
+        // if (tcb.tskque != null) {
+        knl_free_tcb.enqueue(tcb);
+        // FreeQue.enqueue(tcb);
+        // }
+    }
 }
 
 // * Prepare task execution.
 pub fn knl_make_dormant(tcb: *TCB) void {
+    print("knl_make_dormant start");
+    defer print("knl_make_dormant end");
+
     // Initialize variables which should be reset at DORMANT state */
     tcb.state = TSTAT.TS_DORMANT;
     tcb.bpriority = tcb.ipriority;
@@ -165,15 +199,12 @@ pub fn knl_make_dormant(tcb: *TCB) void {
     tcb.sysmode = tcb.isysmode;
     tcb.wupcnt = 0;
     tcb.suscnt = 0;
-
     tcb.klockwait = false;
     tcb.klocked = false;
-
     // if (comptime config.USE_DBGSPT and defined(USE_FUNC_TD_INF_TSK)) {
     //     tcb.stime = 0;
     //     tcb.utime = 0;
     // }
-
     tcb.wercd = undefined;
 
     if (comptime config.func.USE_MUTEX) {

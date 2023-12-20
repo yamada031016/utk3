@@ -38,10 +38,12 @@ pub fn build(b: *std.Build) !void {
     try libsys.dependencies.put("libtk", libtk);
     try libsys.dependencies.put("config", config);
     try libsys.dependencies.put("knlink", knlink);
+    try libsys.dependencies.put("devices", devices);
     exe.addModule("libsys", libsys);
 
     try libtk.dependencies.put("libtk", libtk);
     try libtk.dependencies.put("libsys", libsys);
+    try libtk.dependencies.put("devices", devices);
     exe.addModule("libtk", libtk);
 
     try knlink.dependencies.put("knlink", knlink);
@@ -54,6 +56,20 @@ pub fn build(b: *std.Build) !void {
     exe.setLinkerScript(.{ .path = "./tkernel_map.ld" });
 
     // exe.addAssemblyFile(.{ .path = "kernel/sysdepend/cpu/core/armv7m/dispatch.S" });
+    const bin = b.addObjCopy(exe.getEmittedBin(), .{
+        .format = .bin,
+    });
+    bin.step.dependOn(&exe.step);
+
+    // Copy the bin to the output directory
+    const copy_bin = b.addInstallBinFile(bin.getOutput(), "utk3.bin");
+    b.default_step.dependOn(&copy_bin.step);
+
+    const stlink = b.step("stlink", "Write binary file to stm32l4");
+    const stlink_path = &[_][]const u8{ "st-flash", "write", "zig-out/bin/utk3.bin", "0x08000000" };
+    const run_stlink = b.addSystemCommand(stlink_path);
+    run_stlink.step.dependOn(b.getInstallStep());
+    stlink.dependOn(&run_stlink.step);
 
     b.installArtifact(exe);
 

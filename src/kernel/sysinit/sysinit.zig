@@ -11,7 +11,7 @@ const read = utils.read;
 const hw_setting = knlink.sysdepend.hw_setting;
 const config = @import("config");
 const cpu_cntl = knlink.sysdepend.core.cpu_cntl;
-// const cpu_status = knlink.sysdepend.cpu_status;
+const cpu_status = knlink.sysdepend.core.cpu_status;
 const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
 
@@ -19,11 +19,12 @@ const interrupt = knlink.sysdepend.interrupt;
 //    Initialize sequence before micro T-Kernel start.
 //    Perform preparation necessary to start micro T-Kernel.
 pub fn main() !void {
+    print("SYSINIT main function!");
     errdefer |err| {
         print(@errorName(err));
         print("[ERROR] sysinit failed.");
     }
-    // cpu_status.DISABLE_INTERRUPT();
+    cpu_status.DISABLE_INTERRUPT();
 
     if (comptime config.USE_TMONITOR) {
         // // Initialize T-Monitor Compatible Library
@@ -56,7 +57,7 @@ pub fn main() !void {
     // Initialize Kernel-objects
     // この関数でおそらくメモリ関係のバグあり
     tkinit.knl_init_object() catch |err| {
-        print("!ERROR! kernel object initialize\n");
+        print("!ERROR! kernel object initialize");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
@@ -66,7 +67,7 @@ pub fn main() !void {
 
     // Start System Timer
     timer.knl_timer_startup() catch |err| {
-        print("!ERROR! System timer startup\n");
+        print("!ERROR! System timer startup");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
@@ -74,8 +75,9 @@ pub fn main() !void {
     };
 
     // Create & start initial task
-    if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |value| {
-        if (tskmng.tk_sta_tsk(value, 0)) {
+    if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
+        if (tskmng.tk_sta_tsk(tskid, 0)) {
+            print("sta_tsk succeed.");
             cpu_cntl.knl_force_dispatch();
             // Start Initial Task.
             unreachable;
@@ -87,9 +89,9 @@ pub fn main() !void {
         print("!ERROR! Initial Task can not creat");
         return err;
     }
+
     // After this, Error handling
 
-    print("SYSINIT main function!");
 }
 // Exit micro T-Kernel from Initial Task.
 pub fn knl_tkernel_exit() TkError!noreturn {

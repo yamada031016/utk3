@@ -3,19 +3,25 @@ const sysdef = @import("libsys").sysdepend.sysdef;
 const print = @import("devices").serial.print;
 // const reset_hdl = knlink.sysdepend.reset_hdl;
 // const exc_hdr = knlink.sysdepend.exc_hdr;
-// const interrupt = knlink.sysdepend.interrupt;
+const interrupt = knlink.sysdepend.interrupt;
 // if (comptime  CPU_STM32L4) {
 //Exception/Interrupt Vector Table
 
 // Exception/Interrupt Vector Table
 
-extern fn knl_dispatch_entry() callconv(.C) void;
+// extern fn knl_dispatch_entry() callconv(.C) void;
 
 pub const Handler = *const fn () callconv(.C) void;
 
-pub fn default_handler() callconv(.C) void {
-    print("launched default handler!");
+pub fn pend_handler() callconv(.C) void {
+    print("launched pend handler!");
     while (true) {}
+}
+
+pub fn default_handler() callconv(.C) void {
+    print("launched irq handler!");
+    return;
+    // while (true) {}
 }
 
 pub fn nmi_handler() callconv(.C) void {
@@ -48,6 +54,12 @@ pub fn svcall_handler() callconv(.C) void {
     while (true) {}
 }
 
+pub fn debug_monitor_handler() callconv(.C) void {
+    print("launched debug_monitor handler!");
+    return;
+    // while (true) {}
+}
+
 extern fn Reset_Handler() noreturn;
 
 pub const VectorTable = extern struct {
@@ -58,12 +70,12 @@ pub const VectorTable = extern struct {
     mpu_fault_handler: Handler = default_handler,
     bus_fault_handler: Handler = default_handler,
     usage_fault_handler: Handler = default_handler,
-    reserved1: [4]u8 = undefined,
+    reserved1: [4]usize = undefined,
     svcall: Handler = default_handler,
     debug_monitor_handler: Handler = default_handler,
-    reserved2: u8 = undefined,
-    // pend_sv: Handler,
-    // systick: Handler,
+    reserved2: usize = undefined,
+    pend_sv: Handler = default_handler,
+    systick: Handler,
     irq: [32]Handler = [_]Handler{default_handler} ** 32,
 };
 
@@ -76,6 +88,9 @@ pub export const vector_tbl: VectorTable linksection(".vector") = .{
     .bus_fault_handler = bus_handler,
     .usage_fault_handler = usage_handler,
     .svcall = svcall_handler,
+    .debug_monitor_handler = debug_monitor_handler,
+    .pend_sv = pend_handler,
+    .systick = default_handler,
     // .nmi_handler = exc_hdr.NMI_Handler,
     // .hard_fault_handler = exc_hdr.HardFault_Handler,
     // .mpu_fault_handler = exc_hdr.MemManage_Handler,

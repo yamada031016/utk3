@@ -10,6 +10,7 @@ const libtk = @import("libtk");
 const write = libtk.syslib.cpu.write;
 const int = libtk.sysdepend.int;
 const config = @import("config");
+const serial = @import("devices").serial;
 
 // if (comptime CPU_CORE_ARMV7M) {
 //CPU-Dependent Control
@@ -150,6 +151,9 @@ pub fn knl_get_reg(tcb: *TCB, regs: *cpudef.T_REGS, eit: *cpudef.T_EIT, cregs: *
 
 //Task dispatcher startup
 pub fn knl_force_dispatch() void {
+    serial.print("knl_force_dispatch start");
+    defer serial.print("knl_force_dispatch end");
+
     task.knl_dispatch_disabled = knlink.DDS_DISABLE_IMPLICIT;
     knlink.knl_ctxtsk = null;
     write(sysdef.core.SCB_ICSR, sysdef.core.ICSR_PENDSVSET); // pendsv exception */

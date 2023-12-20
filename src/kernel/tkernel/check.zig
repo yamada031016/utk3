@@ -12,6 +12,7 @@ const knlink = @import("knlink");
 const cpu_status = knlink.sysdepend.cpu_status;
 const in_indp = cpu_status.in_indp;
 const knldef = @import("libsys").knldef;
+const serial = @import("devices").serial;
 
 //Check object ID range (TkError.E_ID)
 
@@ -20,6 +21,7 @@ pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
     if (!in_indp() and (tskid == syscall.TSK_SELF)) {
         return TkError.IncorrectObjectState;
     } else if (!knldef.CHK_TSKID(tskid)) {
+        serial.intPrint("tskid", tskid);
         return TkError.IncorrectIdNumber;
     }
 }
