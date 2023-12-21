@@ -43,25 +43,21 @@ pub fn main() !void {
     // Initialize Device before micro T-Kernel starts
     devinit.knl_init_device() catch |err| {
         print("[ERROR] knl_init_device() failed.");
-        // while (true) {}
         return err;
     };
 
     // Interrupt initialize
     interrupt.knl_init_interrupt() catch |err| {
         print("[ERROR] knl_init_interrupt() failed.");
-        // while (true) {}
         return err;
     };
 
     // Initialize Kernel-objects
-    // この関数でおそらくメモリ関係のバグあり
     tkinit.knl_init_object() catch |err| {
         print("!ERROR! kernel object initialize");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
-        // while (true) {}
         return err;
     };
 
