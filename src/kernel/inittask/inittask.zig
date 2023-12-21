@@ -25,7 +25,7 @@ pub fn init_task_main() TkError!void {
     if (start_system()) {
         if (comptime config.USE_SYSTEM_MESSAGE and config.USE_TMONITOR) {
             // print("\n\nmicroT-Kernel Version %x.%02x\n\n", VER_MAJOR, VER_MINOR);
-            print("\n\nmicroT-Kernel Version 3.0\n\n");
+            print("\r\nmicroT-Kernel Version 3.0\r\n");
         }
 
         // if (comptime USE_USERINIT) {
@@ -40,8 +40,8 @@ pub fn init_task_main() TkError!void {
         //     (*(MAIN_FP)RI_USERINIT)(-1, NULL);
         // }
     } else |err| {
+        print("!ERROR! Init Task start");	// Start message
         return err;
-        // SYSTEM_MESSAGE("!ERROR! Init Task start\n");	// Start message
     }
     shutdown_system(fin); // Never return
     unreachable;
