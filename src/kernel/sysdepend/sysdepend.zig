@@ -7,4 +7,5 @@ pub const sys_timer = @import("cpu/core/armv7m/sys_timer.zig");
 pub const cpu_cntl = @import("cpu/core/armv7m/cpu_cntl.zig");
 pub const cpu_status = @import("cpu/core/armv7m/cpu_status.zig");
 pub const core = @import("cpu/core/armv7m/sysdepend.zig");
+pub const cpu = @import("cpu/stm32l4/sysdepend.zig");
 // pub const reset_hdl = @import("cpu/core/armv7m/reset_hdl.zig");

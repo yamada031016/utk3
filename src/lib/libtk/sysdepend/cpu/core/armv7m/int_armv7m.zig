@@ -30,11 +30,10 @@ pub fn CheckInt_nvic(intno: usize) bool {
 pub fn set_basepri(intsts: u32) void {
     serial.print("set_basepri() start");
     defer serial.print("set_basepri() end");
-    _ = intsts;
-    // asm volatile ("msr basepri, %0"
-    //     :
-    //     : [ret] "r" (intsts),
-    // );
+    asm volatile ("msr basepri, %[_intsts]"
+        :
+        : [_intsts] "r" (intsts),
+    );
 }
 
 // Get Base Priority register
@@ -52,14 +51,14 @@ pub fn disint() u32 {
     var intsts: u32 = 0;
 
     var maxint: u32 = sysdef.core.INTPRI_VAL(sysdef.cpu.INTPRI_MAX_EXTINT_PRI);
-    _ = maxint;
-    // asm volatile ("mrs %0, basepri"
-    //     : [ret] "=r" (intsts),
-    // );
-    // asm volatile ("msr basepri, %0"
-    //     :
-    //     : [ret] "r" (maxint),
-    // );
+    asm volatile ("mrs %[_intsts], basepri"
+        :
+        : [_intsts] "r" (intsts),
+    );
+    asm volatile ("msr basepri, %[_maxint]"
+        :
+        : [_maxint] "r" (maxint),
+    );
 
     return intsts;
 }

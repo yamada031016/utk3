@@ -7,6 +7,7 @@ pub const cpu_cntl = @import("cpu_cntl.zig");
 pub const cpu_status = @import("cpu_status.zig");
 pub const offset = @import("offset.zig");
 pub const cpu_task = @import("cpu_task.zig");
+pub const dispatch = @import("dispacth.zig");
 const SStackFrame = cpu_task.SStackFrame;
 
 // Task context block */

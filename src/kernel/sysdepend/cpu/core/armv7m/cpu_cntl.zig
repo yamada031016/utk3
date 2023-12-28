@@ -6,6 +6,7 @@ const task = knlink.task;
 const TCB = knlink.TCB;
 const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
+const knldef = libsys.knldef;
 const libtk = @import("libtk");
 const write = libtk.syslib.cpu.write;
 const int = libtk.sysdepend.int;
@@ -15,6 +16,8 @@ const serial = @import("devices").serial;
 // if (comptime CPU_CORE_ARMV7M) {
 //CPU-Dependent Control
 
+// pub const knl_tmp_stack: [knldef.TMP_STACK_SIZE]u8 = [_]u8{0} ** knldef.TMP_STACK_SIZE;
+pub export const knl_tmp_stack: [knldef.TMP_STACK_SIZE]u8 = [_]u8{0} ** knldef.TMP_STACK_SIZE;
 // Temporal stack used when 'dispatch_to_schedtsk' is called */
 // Noinit(knl_tmp_stack:[TMP_STACK_SIZE]u8);
 

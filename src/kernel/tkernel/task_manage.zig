@@ -68,25 +68,32 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
 
         // Get control block from FreeQue */
         // var free_tcb: ?*TCB.Node = @as(?*TCB, task.knl_free_tcb);
-        print("free_tcb before");
-        const free_tcb: ?*TCB = free_tcb: {
+        // print("free_tcb before");
+
+        var free_tcb: ?*TCB = free_tcb: {
             if (task.knl_free_tcb.dequeue()) |_free_tcb| {
-                print("return tcb in :free_tcb:");
+                // print("return tcb in :free_tcb:");
                 break :free_tcb _free_tcb;
             } else {
-                print("return null in :free_tcb:");
+                // print("return null in :free_tcb:");
                 // return TkError.ExceedSystemLimits;
                 break :free_tcb null;
             }
         };
-        print("free_tcb after");
+
+        // var free_tcb = task.knl_free_tcb.start.?.data;
+        // print("free_tcb after");
         if (free_tcb) |tcb| {
-            serial.intPrint("free tskid", tcb.tskid);
+            // serial.intPrint("free tskid", tcb.tskid);
             // Initialize control block */
+            // serial.hexdump("tcb.ipriority addr", @intFromPtr(&free_tcb.?.tskid));
             tcb.exinf = pk_ctsk.exinf;
             tcb.tskatr = pk_ctsk.tskatr;
             tcb.task = pk_ctsk.task;
-            tcb.ipriority = @as(PRI, task.int_priority(pk_ctsk.itskpri));
+            tcb.tskid = 1;
+            serial.intPrint("tcb ipri", tcb.ipriority);
+            tcb.ipriority = task.int_priority(pk_ctsk.itskpri);
+            serial.intPrint("tcb ipri", tcb.ipriority);
             tcb.sstksz = sstksz;
             if (comptime config.USE_OBJECT_NAME) {
                 if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {

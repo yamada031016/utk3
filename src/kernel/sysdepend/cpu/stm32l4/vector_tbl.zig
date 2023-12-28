@@ -9,17 +9,12 @@ const interrupt = knlink.sysdepend.interrupt;
 
 // Exception/Interrupt Vector Table
 
-// extern fn knl_dispatch_entry() callconv(.C) void;
+const knl_dispatch_entry = knlink.sysdepend.core.dispatch.knl_dispatch_entry;
 
 pub const Handler = *const fn () callconv(.C) void;
 
-pub fn pend_handler() callconv(.C) void {
-    print("launched pend handler!");
-    while (true) {}
-}
-
 pub fn default_handler() callconv(.C) void {
-    print("launched irq handler!");
+    print("launched default handler!");
     return;
     // while (true) {}
 }
@@ -63,7 +58,7 @@ pub fn debug_monitor_handler() callconv(.C) void {
 extern fn Reset_Handler() noreturn;
 
 pub const VectorTable = extern struct {
-    top_of_stack: u32,
+    top_of_stack: usize,
     reset_handler: Handler,
     nmi_handler: Handler = default_handler,
     hard_fault_handler: Handler = default_handler,
@@ -89,7 +84,7 @@ pub export const vector_tbl: VectorTable linksection(".vector") = .{
     .usage_fault_handler = usage_handler,
     .svcall = svcall_handler,
     .debug_monitor_handler = debug_monitor_handler,
-    .pend_sv = pend_handler,
+    .pend_sv = knl_dispatch_entry,
     .systick = default_handler,
     // .nmi_handler = exc_hdr.NMI_Handler,
     // .hard_fault_handler = exc_hdr.HardFault_Handler,
@@ -98,7 +93,6 @@ pub export const vector_tbl: VectorTable linksection(".vector") = .{
     // .usage_fault_handler = exc_hdr.UsageFault_Handler,
     // .svcall = exc_hdr.Svcall_Handler,
     // .debug_monitor_handler = exc_hdr.DebugMon_Handler,
-    // .pend_sv = knl_dispatch_entry,
     // .systick = interrupt.knl_systim_inthdr,
     // .irq = [_]Handler{knlink.default_handler} ** 32,
 };

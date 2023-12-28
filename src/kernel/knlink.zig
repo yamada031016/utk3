@@ -18,6 +18,7 @@ pub const task_manage = @import("tkernel/task_manage.zig");
 // pub const timer_calls = @import("tkernel/time_calls.zig");
 pub const tkinit = @import("tkernel/tkinit.zig");
 pub const wait = @import("tkernel/wait.zig");
+pub const power = @import("tkernel/power.zig");
 
 const queue = @import("libsys").queue;
 const libtk = @import("libtk");

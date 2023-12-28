@@ -39,14 +39,14 @@ pub inline fn knl_task_alive(state: TSTAT) bool {
 
 // * Task priority internal/external expression conversion macro
 pub fn int_priority(x: PRI) PRI {
-    return (@as(PRI, x) - knldef.MIN_TSKPRI);
+    return (x - knldef.MIN_TSKPRI);
 }
 pub fn ext_tskpri(x: PRI) isize {
     return (@as(isize, x) + knldef.MIN_TSKPRI);
 }
 
 // * Task control information
-pub const knl_tcb_table: [knldef.NUM_TSKID]*TCB = tcb_table: {
+pub var knl_tcb_table: [knldef.NUM_TSKID]*TCB = tcb_table: {
     var tmp: [knldef.NUM_TSKID]*TCB = undefined;
     for (0..knldef.NUM_TSKID) |i| {
         var dummy: *TCB = undefined;
@@ -148,7 +148,7 @@ pub inline fn knl_reschedule() void {
 
 // * TCB Initialization
 pub fn knl_task_initialize() TkError!void {
-    print("knl_task_initialize() start.");
+    print("\x1b[32m<>knl_task_initialize() start.\x1b[0m");
     defer print("knl_task_initialize() end");
     errdefer print("knl_task_initialize() failed");
     // Get system information */
@@ -171,11 +171,15 @@ pub fn knl_task_initialize() TkError!void {
     // エラーも出ないのでsysinitに制御が戻っていないと思う
     // 必要になるまで下記の処理を封印する
     // print("for loop before");
+    // for (0..32) |i| {
     for (knl_tcb_table, 0..32) |tcb, i| {
+        // var tcb = &knl_tcb_table[i];
         // serial.intPrint("for loop", i);
         tcb.tskid = knldef.ID_TSK(i);
-        // serial.intPrint("tskid", tcb.tskid);
+        // serial.intPrint("tcb.tskid", tcb.tskid);
         // try knlink.check.CHECK_TSKID(tcb.tskid);
+        // serial.hexdump("tcb tbl addr", @intFromPtr(knl_tcb_table[i]));
+        serial.hexdump("tcb addr", @intFromPtr(tcb));
         tcb.state = TSTAT.TS_NONEXIST;
         // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
         //     tcb.wrdvno = tskid;

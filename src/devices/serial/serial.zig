@@ -125,6 +125,13 @@ pub fn dev_init_serial(unit: u8) void {
     print("serial init finish.");
 }
 
+pub fn eprint(string: []const u8) void {
+    print("\x1b[31m");
+    defer puts("\x1b[0m");
+    puts("[ERROR]\t");
+    print(string);
+}
+
 // デバッグビルド時のみ機能するやつ
 fn debug_print_example(data: []const u8) void {
     if (comptime dbg) {

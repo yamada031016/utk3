@@ -117,7 +117,8 @@ pub fn RdyQueue() type {
                 this.klocktsk = tcb;
             }
 
-            if (priority < this.top_priority) {
+            if (priority < this.top_priority + 1) {
+                serial.print("trueやでぇ！");
                 this.top_priority = priority;
                 return true;
             }

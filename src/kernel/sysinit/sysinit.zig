@@ -1,4 +1,5 @@
 const knlink = @import("knlink");
+const serial = @import("devices").serial;
 const print = @import("devices").serial.print;
 const inittask = knlink.inittask;
 const devinit = knlink.sysdepend.devinit;
@@ -19,10 +20,10 @@ const interrupt = knlink.sysdepend.interrupt;
 //    Initialize sequence before micro T-Kernel start.
 //    Perform preparation necessary to start micro T-Kernel.
 pub fn main() !void {
-    print("SYSINIT main function!");
+    print("\x1b[32m<>SYSINIT main function.\x1b[0m");
     errdefer |err| {
-        print(@errorName(err));
-        print("[ERROR] sysinit failed.");
+        serial.eprint(@errorName(err));
+        serial.eprint("sysinit failed.");
     }
     cpu_status.DISABLE_INTERRUPT();
 
@@ -42,19 +43,19 @@ pub fn main() !void {
 
     // Initialize Device before micro T-Kernel starts
     devinit.knl_init_device() catch |err| {
-        print("[ERROR] knl_init_device() failed.");
+        serial.eprint("knl_init_device() failed.");
         return err;
     };
 
     // Interrupt initialize
     interrupt.knl_init_interrupt() catch |err| {
-        print("[ERROR] knl_init_interrupt() failed.");
+        serial.eprint("knl_init_interrupt() failed.");
         return err;
     };
 
     // Initialize Kernel-objects
     tkinit.knl_init_object() catch |err| {
-        print("!ERROR! kernel object initialize");
+        serial.eprint("kernel object initialize");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
@@ -63,7 +64,7 @@ pub fn main() !void {
 
     // Start System Timer
     timer.knl_timer_startup() catch |err| {
-        print("!ERROR! System timer startup");
+        serial.eprint("System timer startup");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
@@ -78,16 +79,16 @@ pub fn main() !void {
             // Start Initial Task.
             unreachable;
         } else |err| {
-            print("!ERROR! Initial Task can not start");
+            serial.eprint("Initial Task can not start");
             return err;
         }
     } else |err| {
-        print("!ERROR! Initial Task can not creat");
+        serial.eprint("Initial Task can not creat");
         return err;
     }
 
     // After this, Error handling
-
+    while (true) {}
 }
 // Exit micro T-Kernel from Initial Task.
 pub fn knl_tkernel_exit() TkError!noreturn {

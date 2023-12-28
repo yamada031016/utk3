@@ -7,6 +7,7 @@
 // #include "kernel.h"
 // #include "check.h"
 
+pub const knl_lowpow_discnt: bool = false;
 // * Number of times for disabling power-saving mode switch
 // *	If it is 0, the mode switch is enabled.
 

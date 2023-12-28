@@ -53,18 +53,13 @@ pub fn knl_setup_context(tcb: *TCB) void {
     // print("before ssp decrement");
     // // pointerのデクリメント
     const a = @intFromPtr(&ssp);
-    // serial.hexdump("ssp", @intFromPtr(ssp));
-    // serial.hexdump("a", a);
     const b = @sizeOf(*SStackFrame);
-    // serial.hexdump("b", b);
-
-    // print("before ssp set");
     ssp = @ptrFromInt(@as(usize, @intCast(a - b)));
-    // serial.hexdump("ssp", @intFromPtr(ssp));
-    // print("before ssp parameter set");
+
     // CPU context initialization */
     ssp.exp_ret = 0xFFFFFFF9;
-    ssp.lr = null;
+    // ssp.lr = null;
+    ssp.lr = @as(*anyopaque, @ptrFromInt(@intFromPtr(&tcb.task) & ~@as(usize, @intCast(0x1)))); // Task startup address */
     ssp.xpsr = 0x01000000; // Initial SR */
     ssp.pc = @as(*anyopaque, @ptrFromInt(@intFromPtr(&tcb.task) & ~@as(usize, @intCast(0x1)))); // Task startup address */
     tcb.tskctxb.ssp = ssp; // System stack pointer */

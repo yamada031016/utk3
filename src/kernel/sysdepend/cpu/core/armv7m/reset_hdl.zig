@@ -13,6 +13,7 @@ const hexdump = serial.hexdump;
 const intPrint = serial.intPrint;
 
 // if (comptime  CPU_CORE_ARMV7M) {
+extern const __start: usize;
 extern const __data_org: usize;
 extern const __data_start: usize;
 extern const __data_end: usize;
@@ -34,18 +35,20 @@ export fn Reset_Handler() callconv(.C) noreturn {
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
         var src: *volatile usize = @as(*volatile usize, @ptrCast(@constCast((&vector_tbl))));
-        // var top: *volatile usize = @ptrCast(@alignCast(@constCast(&interrupt.exchdr_tbl)));
         var top: *volatile usize = @ptrFromInt(0x2000_0000);
 
         // for (0..sysdef.cpu.N_SYSVEC + sysdef.cpu.N_INTVEC) |_| {
         for (0..@sizeOf(VectorTable)) |_| {
+            // *top++ = *src++;
+            top.* = src.*;
             top = @ptrFromInt(@intFromPtr(top) + @sizeOf(usize));
             src = @ptrFromInt(@intFromPtr(src) + @sizeOf(usize));
-            top.* = src.*;
         }
 
         // Set Vector Table offset to SRAM
         // @as(*volatile usize, @ptrFromInt(sysdef.core.SCB_VTOR)).* = interrupt.exchdr_tbl[0];
+        // あってんのかこれで
+        @as(*volatile usize, @ptrFromInt(sysdef.core.SCB_VTOR)).* = @intFromPtr(&vector_tbl);
     }
 
     // Load .data to ram
@@ -53,7 +56,8 @@ export fn Reset_Handler() callconv(.C) noreturn {
     var data_top = @as(*volatile usize, @ptrCast(&__data_start));
     var data_end: *volatile usize = @as(*volatile usize, @ptrCast(&__data_end));
 
-    // hexdump("&__data_org", @intFromPtr(&__data_org));
+    hexdump("&__start", @intFromPtr(&__start));
+    hexdump("&__data_org", @intFromPtr(&__data_org));
     // hexdump("data_src", @intFromPtr(data_src));
     // hexdump("&__data_start", @intFromPtr(&__data_start));
     // hexdump("&__data_end", @intFromPtr(&__data_end));
@@ -65,11 +69,12 @@ export fn Reset_Handler() callconv(.C) noreturn {
     // hexdump("before data_top addr", @intFromPtr(data_top));
     // hexdump("before data_end addr", @intFromPtr(data_end));
     while (data_top != data_end) {
-        data_top = @as(*volatile usize, @ptrFromInt(@intFromPtr(data_top) + @sizeOf(usize)));
-        data_src = @as(*volatile usize, @ptrFromInt(@intFromPtr(data_src) + @sizeOf(usize)));
+        // *top++ = *src++;
+        data_top.* = data_src.*;
+        data_top = @ptrFromInt(@intFromPtr(data_top) + @sizeOf(usize));
+        data_src = @ptrFromInt(@intFromPtr(data_src) + @sizeOf(usize));
         // hexdump("data_top", @intFromPtr(data_top));
         // hexdump("data_src", @intFromPtr(data_src));
-        data_top.* = data_src.*;
     } else {
         // hexdump("after data_src", data_src.*);
         // hexdump("after data_top", data_top.*);
@@ -77,7 +82,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
         // hexdump("after data_top addr", @intFromPtr(data_top));
         // hexdump("after data_end addr", @intFromPtr(data_end));
     }
-    print("Reset_Handler!!!.");
+    print("\x1b[32m<>Reset_Handler!!!\x1b[0m");
 
     // Initialize .bss
     // if (comptime config.USE_NOINIT) {
@@ -133,7 +138,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
     sysinit.main() catch |err| {
         // errをごまかす苦肉の策
         switch (err) {
-            else => print("Reset Handler failed."),
+            else => serial.eprint("Reset Handler failed."),
         }
     };
     unreachable;

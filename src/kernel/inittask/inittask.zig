@@ -40,7 +40,7 @@ pub fn init_task_main() TkError!void {
         //     (*(MAIN_FP)RI_USERINIT)(-1, NULL);
         // }
     } else |err| {
-        print("!ERROR! Init Task start");	// Start message
+        print("!ERROR! Init Task start"); // Start message
         return err;
     }
     shutdown_system(fin); // Never return
