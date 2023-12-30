@@ -92,7 +92,7 @@ pub fn RdyQueue() type {
             defer serial.print("rdyque insert end");
 
             const priority: usize = tcb.priority;
-            const target: ?*TCB = this.tskque[priority - 1];
+            const target: ?*TCB = this.tskque[priority];
 
             if (target) |elem| {
                 // elem: *TCB
@@ -104,11 +104,12 @@ pub fn RdyQueue() type {
                 // elem.tskque.?.prev.?.tskque.?.next = tcb;
                 // elem.tskque.?.prev = tcb;
             } else {
-                this.tskque[priority - 1] = tcb;
+                this.tskque[priority] = tcb;
             }
 
             if (knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-                this.bitmap[0] |= @as(usize, 1) << @as(u5, @intCast(priority - 1));
+                serial.print("rdyque before bitmap");
+                this.bitmap[0] |= @as(usize, 1) << @as(u5, @intCast(priority));
             } else {
                 tstd.knl_bitset(this.bitmap, priority);
             }
@@ -117,8 +118,9 @@ pub fn RdyQueue() type {
                 this.klocktsk = tcb;
             }
 
+            serial.print("rdyque before pri");
             if (priority < this.top_priority + 1) {
-                serial.print("trueやでぇ！");
+                // serial.print("trueやでぇ！");
                 this.top_priority = priority;
                 return true;
             }

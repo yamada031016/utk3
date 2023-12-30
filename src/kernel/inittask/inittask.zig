@@ -15,7 +15,8 @@ const INITTASK_EXINF = 0x0;
 const INITTASK_ITSKPRI = 1;
 const INITTASK_DSNAME = "inittsk";
 const INITTASK_TSKATR = if (config.USE_IMALLOC) syscall.TA_HLNG | syscall.TA_RNG0 else syscall.TA_HLNG | syscall.TA_RNG0 | syscall.TA_USERBUF;
-const INITTASK_STACK = if (config.USE_IMALLOC) null else init_task_stack;
+// sspをRAM領域に置くためconstではない
+var INITTASK_STACK = if (config.USE_IMALLOC) null else init_task_stack;
 const INITTASK_STKSZ = 1 * 1024;
 
 pub fn init_task_main() TkError!void {
@@ -27,6 +28,7 @@ pub fn init_task_main() TkError!void {
             // print("\n\nmicroT-Kernel Version %x.%02x\n\n", VER_MAJOR, VER_MINOR);
             print("\r\nmicroT-Kernel Version 3.0\r\n");
         }
+        print("\r\nmicroT-Kernel Version 3.0\r\n");
 
         // if (comptime USE_USERINIT) {
         //     // Perform user defined initialization sequence
@@ -60,7 +62,7 @@ pub const knl_init_ctsk = syscall.T_CTSK{
     .itskpri = INITTASK_ITSKPRI, // itskpri
     .stksz = INITTASK_STKSZ, // stksz
     // .dsname = if (config.USE_OBJECT_NAME) INITTASK_DSNAME else undefined, // dsname
-    .bufptr = @as(*anyopaque, @ptrCast(@constCast(&INITTASK_STACK[0]))), // bufptr
+    .bufptr = @as(*anyopaque, @ptrCast(@constCast(&INITTASK_STACK))), // bufptr
 };
 
 // Start System

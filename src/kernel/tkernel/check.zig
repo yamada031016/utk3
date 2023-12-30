@@ -18,6 +18,7 @@ const serial = @import("devices").serial;
 
 // if (comptime config.CHK_ID) {
 pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
+    errdefer serial.eprint("CHECK_TSKID() failed.");
     if (!in_indp() and (tskid == syscall.TSK_SELF)) {
         return TkError.IncorrectObjectState;
     } else if (!knldef.CHK_TSKID(tskid)) {
@@ -27,6 +28,7 @@ pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
 }
 
 pub inline fn CHECK_TSKID_SELF(tskid: ID) TkError!void {
+    errdefer serial.eprint("CHECK_TSKID_SELF() failed.");
     if (!((!in_indp() and (tskid) == syscall.TSK_SELF) or knldef.CHK_TSKID(tskid))) {
         return TkError.IncorrectIdNumber;
     }

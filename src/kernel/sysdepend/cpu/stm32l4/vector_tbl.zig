@@ -13,10 +13,22 @@ const knl_dispatch_entry = knlink.sysdepend.core.dispatch.knl_dispatch_entry;
 
 pub const Handler = *const fn () callconv(.C) void;
 
+pub fn irq_handler() callconv(.C) void {
+    print("launched irq handler!");
+    // return;
+    while (true) {}
+}
+
+pub fn systick_handler() callconv(.C) void {
+    print("launched systick handler!");
+    // return;
+    while (true) {}
+}
+
 pub fn default_handler() callconv(.C) void {
     print("launched default handler!");
-    return;
-    // while (true) {}
+    // return;
+    while (true) {}
 }
 
 pub fn nmi_handler() callconv(.C) void {
@@ -71,7 +83,7 @@ pub const VectorTable = extern struct {
     reserved2: usize = undefined,
     pend_sv: Handler = default_handler,
     systick: Handler,
-    irq: [32]Handler = [_]Handler{default_handler} ** 32,
+    irq: [32]Handler = [_]Handler{irq_handler} ** 32,
 };
 
 pub export const vector_tbl: VectorTable linksection(".vector") = .{
@@ -85,7 +97,7 @@ pub export const vector_tbl: VectorTable linksection(".vector") = .{
     .svcall = svcall_handler,
     .debug_monitor_handler = debug_monitor_handler,
     .pend_sv = knl_dispatch_entry,
-    .systick = default_handler,
+    .systick = systick_handler,
     // .nmi_handler = exc_hdr.NMI_Handler,
     // .hard_fault_handler = exc_hdr.HardFault_Handler,
     // .mpu_fault_handler = exc_hdr.MemManage_Handler,

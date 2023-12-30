@@ -48,33 +48,26 @@ pub const DORMANT_STACK_SIZE = @sizeOf(i32); //7  // To 'R4' position */
 pub fn knl_setup_context(tcb: *TCB) void {
     print("knl_setup_context started.");
     defer print("knl_setup_context end.");
-    // var ssp: *SStackFrame = @ptrCast(@alignCast(tcb.isstack));
     var ssp: *SStackFrame = tcb.isstack;
-    // print("before ssp decrement");
-    // // pointerのデクリメント
-    const a = @intFromPtr(&ssp);
-    const b = @sizeOf(*SStackFrame);
-    ssp = @ptrFromInt(@as(usize, @intCast(a - b)));
+    // pointerのデクリメント
+    ssp = @ptrFromInt(@intFromPtr(ssp) - @sizeOf(SStackFrame));
 
     // CPU context initialization */
     ssp.exp_ret = 0xFFFFFFF9;
-    // ssp.lr = null;
-    ssp.lr = @as(*anyopaque, @ptrFromInt(@intFromPtr(&tcb.task) & ~@as(usize, @intCast(0x1)))); // Task startup address */
+    ssp.lr = null;
     ssp.xpsr = 0x01000000; // Initial SR */
-    ssp.pc = @as(*anyopaque, @ptrFromInt(@intFromPtr(&tcb.task) & ~@as(usize, @intCast(0x1)))); // Task startup address */
+    ssp.pc = @ptrFromInt(@intFromPtr(tcb.task) & ~@as(usize, @intCast(0x1))); // Task startup address */
     tcb.tskctxb.ssp = ssp; // System stack pointer */
 }
 
 // Set task startup code
 //Called by 'tk_sta_tsk()' processing.
-// 暗黙の構造体の型変換でやりたい放題してるけど動くんか?
 pub inline fn knl_setup_stacd(tcb: *TCB, stacd: usize) void {
     print("knl_setup_stacd started.");
     defer print("knl_setup_stacd end.");
-    var ssp: *SStackFrame = tcb.tskctxb.ssp;
-
-    ssp.r[0] = stacd;
-    ssp.r[1] = @as(usize, @intFromPtr(tcb.exinf));
+    // var ssp: *SStackFrame = tcb.tskctxb.ssp;
+    tcb.tskctxb.ssp.r[0] = stacd;
+    tcb.tskctxb.ssp.r[1] = @as(usize, @intFromPtr(tcb.exinf));
 }
 
 // Delete task contexts

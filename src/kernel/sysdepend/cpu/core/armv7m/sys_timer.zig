@@ -27,8 +27,8 @@ pub inline fn knl_start_hw_timer() void {
     var n = @as(usize, @intCast(knldef.TIMER_PERIOD * sysdef.TMCLK_KHz - 1));
     write(sysdef.core.SYST_RVR, n);
 
-    // Start timer count */
-    write(sysdef.core.SYST_CSR, 0x00000007);
+    // Start timer count
+    // write(sysdef.core.SYST_CSR, 0x00000007);
 }
 
 //Clear timer interrupt

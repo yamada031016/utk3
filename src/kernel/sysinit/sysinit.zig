@@ -74,7 +74,6 @@ pub fn main() !void {
     // Create & start initial task
     if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
         if (tskmng.tk_sta_tsk(tskid, 0)) {
-            print("sta_tsk succeed.");
             cpu_cntl.knl_force_dispatch();
             // Start Initial Task.
             unreachable;

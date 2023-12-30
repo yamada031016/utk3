@@ -1,5 +1,6 @@
 //Queuing operation */
 const knlink = @import("knlink");
+const serial = @import("devices").serial;
 const print = @import("devices").serial.print;
 
 // Zig std queue
@@ -31,6 +32,7 @@ pub fn TkQueue(comptime T: type) type {
         }
 
         pub fn enqueue(this: *This, value: T) void {
+            // serial.hexdump("tcb in enqueue", @intFromPtr(value));
             var node = Node{ .data = value, .next = null, .prev = this.end };
             this.end = &node;
             if (node.prev) |prev_node| {
@@ -40,26 +42,6 @@ pub fn TkQueue(comptime T: type) type {
                 // print("que null");
                 this.start = &node;
             }
-            // if (this.isEmpty()) {
-            //     // print("empty");
-            //     this.start = @constCast(&node);
-            //     this.end = @constCast(&node);
-            //     this.start.?.next = this.end;
-            // } else {
-            //     // print("not empty");
-            //     // if (this.start) |end| {
-            //     // print("enqueue end.next");
-            //     this.end.?.next = @constCast(&node);
-            //     this.end = @constCast(&node);
-            //     // end.next.?.prev = end;
-            //     // }
-            //     // else {
-            //     //     print("end is empty");
-            //     //     this.start = @constCast(&node);
-            //     //     this.end = @constCast(&node);
-            //     //     this.start.?.next = this.end;
-            //     // }
-            // }
         }
 
         pub fn dequeue(this: *This) ?T {
@@ -71,22 +53,6 @@ pub fn TkQueue(comptime T: type) type {
                 this.end = null;
             }
             return start.data;
-
-            // print("dequeue");
-            // // const start: ?*Node = if (this.start) |_start| _start else null;
-            // var start = this.start orelse return null;
-            // this.start = start.next;
-            // if (start.next) |new_start| {
-            //     print("que exists.");
-            //     // this.start = new_start.next;
-            //     new_start.prev = null;
-            // } else {
-            //     print("que null.");
-            //     this.end = null;
-            // }
-            // start.prev = null;
-            // start.next = null;
-            // return start.data;
         }
 
         pub fn dequeueNext(this: *This) ?T {

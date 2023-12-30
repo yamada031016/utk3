@@ -16,8 +16,8 @@ const serial = @import("devices").serial;
 // if (comptime CPU_CORE_ARMV7M) {
 //CPU-Dependent Control
 
-// pub const knl_tmp_stack: [knldef.TMP_STACK_SIZE]u8 = [_]u8{0} ** knldef.TMP_STACK_SIZE;
-pub export const knl_tmp_stack: [knldef.TMP_STACK_SIZE]u8 = [_]u8{0} ** knldef.TMP_STACK_SIZE;
+// pub export const knl_tmp_stack: [knldef.TMP_STACK_SIZE]u8 = [_]u8{0} ** knldef.TMP_STACK_SIZE;
+pub export const knl_tmp_stack: [knldef.TMP_STACK_SIZE]usize = undefined;
 // Temporal stack used when 'dispatch_to_schedtsk' is called */
 // Noinit(knl_tmp_stack:[TMP_STACK_SIZE]u8);
 

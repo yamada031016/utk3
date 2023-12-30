@@ -12,6 +12,9 @@ const serial = @import("devices").serial;
 const hexdump = serial.hexdump;
 const intPrint = serial.intPrint;
 
+const builtin = @import("builtin");
+const dbg = builtin.mode == .Debug;
+
 // if (comptime  CPU_CORE_ARMV7M) {
 extern const __start: usize;
 extern const __data_org: usize;
@@ -30,7 +33,9 @@ extern const vector_tbl: VectorTable;
 export fn Reset_Handler() callconv(.C) noreturn {
     // Startup Hardware
     hw_setting.knl_startup_hw();
-    knlink.sysdepend.devinit.knl_start_device();
+    if (dbg) {
+        knlink.sysdepend.devinit.knl_start_device();
+    }
 
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
@@ -56,7 +61,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
     var data_top = @as(*volatile usize, @ptrCast(&__data_start));
     var data_end: *volatile usize = @as(*volatile usize, @ptrCast(&__data_end));
 
-    hexdump("&__start", @intFromPtr(&__start));
+    // hexdump("&__start", @intFromPtr(&__start));
     hexdump("&__data_org", @intFromPtr(&__data_org));
     // hexdump("data_src", @intFromPtr(data_src));
     // hexdump("&__data_start", @intFromPtr(&__data_start));

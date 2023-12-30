@@ -12,8 +12,8 @@ extern var knl_schedtsk: ?*TCB;
 extern const TCB_tskctxb: usize;
 extern const TCB_tskatr: usize;
 extern var knl_dispatch_disabled: bool;
-// const knl_tmp_stack = knlink.sysdepend.core.cpu_cntl.knl_tmp_stack;
-extern const knl_tmp_stack: [TMP_STACK_SIZE]u8;
+const knl_tmp_stack = knlink.sysdepend.core.cpu_cntl.knl_tmp_stack;
+// extern const knl_tmp_stack: [TMP_STACK_SIZE]u8;
 const print = @import("devices").serial.print;
 
 const intpri = INTPRI_VAL(INTPRI_MAX_EXTINT_PRI);
@@ -24,7 +24,7 @@ pub fn knl_dispatch_entry() callconv(.C) void {
     defer print("knl_dispatch_entry end.");
 
     knl_dispatch_disabled = true;
-    const tmp_stack = @as(*volatile usize, @ptrFromInt(@intFromPtr(&knl_tmp_stack) + TMP_STACK_SIZE));
+    const tmp_stack = @as(*usize, @ptrFromInt(@intFromPtr(&knl_tmp_stack) + TMP_STACK_SIZE));
 
     asm volatile (
         \\.code 16
@@ -58,37 +58,41 @@ pub fn knl_dispatch_entry() callconv(.C) void {
         : [_tmp_stack] "m" (tmp_stack.*),
     );
 
-    int.core.set_basepri(intpri);
+    while (true) {
+        print("before dispatch ctxtsk to schedtsk");
+        int.core.set_basepri(intpri);
+        if (knl_schedtsk != null) {
+            print("knl_schedtsk is not null");
+            knl_ctxtsk = knl_schedtsk;
+            asm volatile (
+                \\  ldr	sp, %[ssp] // Restore ssp from TCB
+                :
+                : [ssp] "m" (knl_schedtsk.?.tskctxb.ssp.*),
+            );
+            break;
+        }
 
-    print("before dispatch ctxtsk to schedtsk");
-    if (knl_schedtsk != null) {
-        print("knl_schedtsk is not null");
-        knl_ctxtsk = knl_schedtsk;
-        asm volatile (
-            \\  ldr	sp, %[ssp] // Restore ssp from TCB
-            :
-            : [ssp] "m" (knl_schedtsk.?.tskctxb.ssp.*),
-        );
+        print("before low_pow()");
+        if (!knl_lowpow_discnt) {
+            print("execute low_pow()");
+            // This function is unimplement.
+            low_pow();
+        }
+        int.core.set_basepri(0);
     }
 
-    print("before low_pow()");
-    if (!knl_lowpow_discnt) {
-        print("execute low_pow()");
-        // This function is unimplement.
-        low_pow();
-    }
-    int.core.set_basepri(0);
-
-    // /*----------------- Restore "schedtsk" context. -----------------*/
+    // ----------------- Restore "schedtsk" context. -----------------
     print("before restore schedtsk context");
+    asm volatile (
+        \\  pop	{lr}
+        \\  pop	{r4-r11}
+    );
     knl_dispatch_disabled = false;
     // int.core.set_basepri(0);
     asm volatile (
-    // \\  pop	{lr}
-        \\  pop	{r4-r11,lr}
         \\  bx	lr
         // \\ bx %[task]
         // :
-        // : [task] "r" (knl_ctxtsk.?.tskctxb.ssp.pc.?),
+        // : [task] "r" (knl_ctxtsk.?.tskctxb.ssp.pc),
     );
 }

@@ -67,62 +67,59 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
         defer cpu_status.END_CRITICAL_SECTION();
 
         // Get control block from FreeQue */
-        // var free_tcb: ?*TCB.Node = @as(?*TCB, task.knl_free_tcb);
-        // print("free_tcb before");
+        // var free_tcb: ?*TCB = free_tcb: {
+        //     if (task.knl_free_tcb.dequeue()) |_free_tcb| {
+        //         // print("return tcb in :free_tcb:");
+        //         break :free_tcb _free_tcb;
+        //     } else {
+        //         // print("return null in :free_tcb:");
+        //         // return TkError.ExceedSystemLimits;
+        //         break :free_tcb null;
+        //     }
+        // };
 
-        var free_tcb: ?*TCB = free_tcb: {
-            if (task.knl_free_tcb.dequeue()) |_free_tcb| {
-                // print("return tcb in :free_tcb:");
-                break :free_tcb _free_tcb;
-            } else {
-                // print("return null in :free_tcb:");
-                // return TkError.ExceedSystemLimits;
-                break :free_tcb null;
-            }
-        };
+        var tcb = task.knl_tcb_table[0];
 
         // var free_tcb = task.knl_free_tcb.start.?.data;
         // print("free_tcb after");
-        if (free_tcb) |tcb| {
-            // serial.intPrint("free tskid", tcb.tskid);
-            // Initialize control block */
-            // serial.hexdump("tcb.ipriority addr", @intFromPtr(&free_tcb.?.tskid));
-            tcb.exinf = pk_ctsk.exinf;
-            tcb.tskatr = pk_ctsk.tskatr;
-            tcb.task = pk_ctsk.task;
-            tcb.tskid = 1;
-            serial.intPrint("tcb ipri", tcb.ipriority);
-            tcb.ipriority = task.int_priority(pk_ctsk.itskpri);
-            serial.intPrint("tcb ipri", tcb.ipriority);
-            tcb.sstksz = sstksz;
-            if (comptime config.USE_OBJECT_NAME) {
-                if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {
-                    tstd.knl_strncpy(@as([]const u8, tcb.name), @as([]const u8, pk_ctsk.dsname), config.OBJECT_NAME_LENGTH);
-                }
+        // if (free_tcb) |tcb| {
+        // serial.intPrint("free tskid", tcb.tskid);
+        // Initialize control block */
+        // serial.hexdump("tcb addr", @intFromPtr(tcb));
+        tcb.exinf = pk_ctsk.exinf;
+        tcb.tskatr = pk_ctsk.tskatr;
+        tcb.task = pk_ctsk.task;
+        // serial.intPrint("tcb ipri", tcb.ipriority);
+        tcb.ipriority = task.int_priority(pk_ctsk.itskpri);
+        // serial.intPrint("tcb ipri", tcb.ipriority);
+        tcb.sstksz = sstksz;
+        if (comptime config.USE_OBJECT_NAME) {
+            if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {
+                tstd.knl_strncpy(@as([]const u8, tcb.name), @as([]const u8, pk_ctsk.dsname), config.OBJECT_NAME_LENGTH);
             }
-
-            // Set stack pointer */
-            // const tmp: isize = @as(isize, @intCast(@intFromPtr(stack))) + sstksz;
-            const tmp: usize = @intFromPtr(stack) + sstksz;
-            tcb.isstack = @ptrFromInt(tmp);
-            print("after set stack pointer");
-
-            // Set initial value of task operation mode */
-            tcb.isysmode = 1;
-            tcb.sysmode = 1;
-            // make it to DORMANT state */
-            task.knl_make_dormant(tcb);
-
-            if (comptime config.USE_IMALLOC) {
-                // if ( (ercd < E_OK) && ((pk_ctsk.tskatr & TA_USERBUF) == 0) ) {
-                // 	knl_Ifree(stack);
-                // }
-            }
-
-            return tcb.tskid;
-        } else {
-            return TkError.ExceedSystemLimits;
         }
+
+        // Set stack pointer */
+        // const tmp: isize = @as(isize, @intCast(@intFromPtr(stack))) + sstksz;
+        // const tmp: usize = @intFromPtr(stack) + sstksz;
+        tcb.isstack = @ptrFromInt(@intFromPtr(stack) + sstksz);
+
+        // Set initial value of task operation mode */
+        tcb.isysmode = 1;
+        tcb.sysmode = 1;
+        // make it to DORMANT state */
+        task.knl_make_dormant(tcb);
+
+        if (comptime config.USE_IMALLOC) {
+            // if ( (ercd < E_OK) && ((pk_ctsk.tskatr & TA_USERBUF) == 0) ) {
+            // 	knl_Ifree(stack);
+            // }
+        }
+
+        return tcb.tskid;
+        // } else {
+        //     return TkError.ExceedSystemLimits;
+        // }
     }
 }
 
@@ -170,7 +167,7 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
     print("tk_sta_tsk start.");
     defer print("tk_sta_tsk end.");
-    errdefer print("tk_sta_tsk failed.");
+    errdefer serial.eprint("tk_sta_tsk failed.");
     check.CHECK_TSKID(tskid) catch |err| {
         return err;
     };
@@ -183,7 +180,7 @@ pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
     {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
-        var state: TSTAT = tcb.*.state;
+        var state: TSTAT = tcb.state;
         if (state != TSTAT.TS_DORMANT) {
             if (state == TSTAT.TS_NONEXIST) {
                 return TkError.ObjectNotExist;

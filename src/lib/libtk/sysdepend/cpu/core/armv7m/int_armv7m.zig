@@ -28,8 +28,8 @@ pub fn CheckInt_nvic(intno: usize) bool {
 
 //Set Base Priority register
 pub fn set_basepri(intsts: u32) void {
-    serial.print("set_basepri() start");
-    defer serial.print("set_basepri() end");
+    // serial.print("set_basepri() start");
+    // defer serial.print("set_basepri() end");
     asm volatile ("msr basepri, %[_intsts]"
         :
         : [_intsts] "r" (intsts),
