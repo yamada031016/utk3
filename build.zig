@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) !void {
         // .abi = std.Target.Abi.none,
         .cpu_arch = .thumb,
         .os_tag = .freestanding,
-        .abi = .eabi,
+        .abi = .eabi, // noneでも動いた
         .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
         .ofmt = .elf,
     };
@@ -20,6 +20,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
     });
+
     const config = b.createModule(.{ .source_file = .{ .path = "src/config/config.zig" } });
     const devices = b.createModule(.{ .source_file = .{ .path = "src/devices/devices.zig" } });
     const knlink = b.createModule(.{ .source_file = .{ .path = "src/kernel/knlink.zig" } });

@@ -6,7 +6,6 @@ const syscall = libtk.syscall;
 
 fn test_task() void {
     print("test_task()!");
-    while (true) {}
 }
 
 var hoge: [256]isize = [_]isize{1} ** 256;

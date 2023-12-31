@@ -28,5 +28,7 @@ pub inline fn write(port_addr: usize, data: usize) void {
 // 値を格納したあと2Clock待つ必要があるレジスタ用
 pub inline fn setReg(addr: usize, data: usize) void {
     write(addr, data);
-    for (0..1000) |_| {}
+    for (0..1000) |_| {
+        asm volatile ("nop");
+    }
 }

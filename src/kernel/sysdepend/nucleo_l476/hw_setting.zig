@@ -34,6 +34,8 @@ pub fn knl_startup_hw() void {
     write(sysdef.GPIO_AFRL('B'), 0x0000_0000);
     write(sysdef.GPIO_AFRH('B'), 0x0000_0044);
     write(sysdef.GPIO_ASCR('B'), 0x0000_0001);
+
+    write(sysdef.GPIO_BSRR('A'), (1 << 5));
 }
 
 pub fn knl_shutdown_hw() void {

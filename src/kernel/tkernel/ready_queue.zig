@@ -117,6 +117,10 @@ pub fn RdyQueue() type {
                 this.klocktsk = tcb;
             }
 
+            // Debug:   29096
+            // safe:    52464
+            // Fast:    51604
+            // Small:   8528
             serial.print("rdyque before pri");
             if (priority < this.top_priority + 1) {
                 // serial.print("trueやでぇ！");
