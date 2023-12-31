@@ -31,11 +31,11 @@
 // pub const  knl_mpfcb_table: []MPFCB = undefined;	// Fixed size memory pool control block */
 // pub const knl_free_mpfcb: QUEUE = undefined;	// FreeQue */
 //
-// fn get_mpfcb(id) MPFCB	{ return &knl_mpfcb_table[INDEX_MPF(id)]; }
+//  inline fn get_mpfcb(id) MPFCB	{ return &knl_mpfcb_table[INDEX_MPF(id)]; }
 //
 // const MINSIZE	= @sizeOf(FREEL);
 //  // szのu8はテキトー
-// fn MINSZ(sz: u8) u32{ return((@as(u32,sz) + @as(u32,MINSIZE-1)) & ~@as(u32,MINSIZE-1) );}
+//  inline fn MINSZ(sz: u8) u32{ return((@as(u32,sz) + @as(u32,MINSIZE-1)) & ~@as(u32,MINSIZE-1) );}
 //
 // // * Return end address in memory pool area
 // inline fn knl_mempool_end( mpfcb: *MPFCB ) *void {

@@ -28,14 +28,14 @@
 // pub const knl_mbxcb_table: []const MBXCB = undefined;	// Mailbox control block */
 // pub const knl_free_mbxcb: QUEUE = undefined;	// FreeQue */
 //
-// pub fn get_mbxcb(id) MBXCB{ return &knl_mbxcb_table[INDEX_MBX(id)]; }
+// pub inline  fn get_mbxcb(id) MBXCB{ return &knl_mbxcb_table[INDEX_MBX(id)]; }
 //
 // // * Head message
-// pub fn headmsg(mbxcb) QUEUE { return ((mbxcb).mq_head.msgque[0]); }
+// pub inline  fn headmsg(mbxcb) QUEUE { return ((mbxcb).mq_head.msgque[0]); }
 //
 // // * Next message
 //
-// pub fn nextmsg(msg)	{ return @as(*T_MSG, (msg).msgque[0]); }
+// pub inline  fn nextmsg(msg)	{ return @as(*T_MSG, (msg).msgque[0]); }
 //
 // // * Insert a message queue following priority
 // inline fn knl_queue_insert_mpri( pk_msg: *T_MSG_PRI, head: *T_MSG ) void {

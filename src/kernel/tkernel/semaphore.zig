@@ -24,7 +24,7 @@
 // pub const  knl_semcb_table:[]SEMCB = undefined;	// Semaphore control block */
 // pub const knl_free_semcb:QUEUE=undefined;	// FreeQue */
 //
-// fn get_semcb(id:i8)SEMCB{return( &knl_semcb_table[INDEX_SEM(id)] );}
+//  inline fn get_semcb(id:i8)SEMCB{return( &knl_semcb_table[INDEX_SEM(id)] );}
 //
 // // #include "kernel.h"
 // // #include "wait.h"

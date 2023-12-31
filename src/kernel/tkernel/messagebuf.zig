@@ -35,7 +35,7 @@
 // pub const knl_free_mbfcb: QUEUE = undefined;	// FreeQue */
 //
 //  // i8は適当
-// fn get_mbfcb(id: i8) MBFCB{ return( &knl_mbfcb_table[INDEX_MBF(id)]); }
+//inline fn get_mbfcb(id: i8) MBFCB{ return( &knl_mbfcb_table[INDEX_MBF(id)]); }
 //
 //
 // // * Message header format
@@ -44,7 +44,7 @@
 //
 // const ROUNDSIZE=@sizeOf(isize);
 //  // 引数と返り値適当
-// fn ROUNDSZ(sz: i8) u32	{return((@as(u32,sz) + @as(UW,ROUNDSIZE-1)) & ~@as(UW,ROUNDSIZE-1));}
+//inline fn ROUNDSZ(sz: i8) u32	{return((@as(u32,sz) + @as(UW,ROUNDSIZE-1)) & ~@as(UW,ROUNDSIZE-1));}
 //
 // // * Check message buffer free space
 //  // *	If 'msgsz' message is able to be stored, return TRUE.

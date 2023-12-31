@@ -33,8 +33,8 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
     if (comptime (config.CHK_RSATR and config.USE_OBJECT_NAME)) {
         VALID_TSKATR |= syscall.TA_DSNAME;
     }
-    var sstksz: usize = undefined;
-    var stack: *anyopaque = undefined;
+    var sstksz: usize = pk_ctsk.stksz;
+    var stack: *anyopaque = pk_ctsk.bufptr;
 
     try check.CHECK_RSATR(pk_ctsk.tskatr, VALID_TSKATR);
     if (comptime !config.USE_IMALLOC) {
@@ -78,20 +78,19 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
         //     }
         // };
 
-        var tcb = task.knl_tcb_table[0];
+        var tcb = for (0..libsys.knldef.NUM_TSKID) |i| {
+            if (task.knl_tcb_table[i].state == task.TSTAT.NONEXIST) {
+                break task.knl_tcb_table[i];
+            }
+        } else {
+            return TkError.ExceedSystemLimits;
+        };
 
-        // var free_tcb = task.knl_free_tcb.start.?.data;
-        // print("free_tcb after");
-        // if (free_tcb) |tcb| {
-        // serial.intPrint("free tskid", tcb.tskid);
         // Initialize control block */
-        // serial.hexdump("tcb addr", @intFromPtr(tcb));
         tcb.exinf = pk_ctsk.exinf;
         tcb.tskatr = pk_ctsk.tskatr;
         tcb.task = pk_ctsk.task;
-        // serial.intPrint("tcb ipri", tcb.ipriority);
         tcb.ipriority = task.int_priority(pk_ctsk.itskpri);
-        // serial.intPrint("tcb ipri", tcb.ipriority);
         tcb.sstksz = sstksz;
         if (comptime config.USE_OBJECT_NAME) {
             if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {
@@ -100,14 +99,12 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
         }
 
         // Set stack pointer */
-        // const tmp: isize = @as(isize, @intCast(@intFromPtr(stack))) + sstksz;
-        // const tmp: usize = @intFromPtr(stack) + sstksz;
         tcb.isstack = @ptrFromInt(@intFromPtr(stack) + sstksz);
 
         // Set initial value of task operation mode */
         tcb.isysmode = 1;
         tcb.sysmode = 1;
-        // make it to DORMANT state */
+
         task.knl_make_dormant(tcb);
 
         if (comptime config.USE_IMALLOC) {
@@ -181,8 +178,8 @@ pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
         var state: TSTAT = tcb.state;
-        if (state != TSTAT.TS_DORMANT) {
-            if (state == TSTAT.TS_NONEXIST) {
+        if (state != TSTAT.DORMANT) {
+            if (state == TSTAT.NONEXIST) {
                 return TkError.ObjectNotExist;
             } else {
                 return TkError.IncorrectObjectState;
@@ -198,9 +195,9 @@ pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
 // *	Call from critical section
 fn knl_ter_tsk(tcb: *TCB) void {
     var state: TSTAT = @as(TSTAT, tcb.state);
-    if (state == TSTAT.TS_READY) {
+    if (state == TSTAT.READY) {
         task.knl_make_non_ready(tcb);
-    } else if ((state & TSTAT.TS_WAIT) != 0) {
+    } else if ((state & TSTAT.WAIT) != 0) {
         wait.knl_wait_cancel(tcb);
         if (tcb.wspec.rel_wai_hook != null) {
             (*tcb.wspec.rel_wai_hook)(tcb);
@@ -295,7 +292,7 @@ pub fn tk_ter_tsk(tskid: u32) TkError!void {
     defer cpu_status.END_CRITICAL_SECTION();
     var state: TSTAT = @as(TSTAT, tcb.state);
     if (!task.knl_task_alive(state)) {
-        if (state == TSTAT.TS_NONEXIST) {
+        if (state == TSTAT.NONEXIST) {
             return TkError.ObjectNotExist;
         } else {
             return TkError.IncorrectObjectState;
@@ -325,7 +322,7 @@ pub fn tk_chg_pri(tskid: u32, tskpri: isize) TkError!void {
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
-    if (tcb.state == TSTAT.TS_NONEXIST) {
+    if (tcb.state == TSTAT.NONEXIST) {
         return TkError.ObjectNotExist;
     }
 
@@ -394,15 +391,15 @@ pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
     var state: TSTAT = @as(TSTAT, tcb.state);
-    if (state == TSTAT.TS_NONEXIST) {
+    if (state == TSTAT.NONEXIST) {
         return TkError.ObjectNotExist;
     } else {
-        if ((state == TSTAT.TS_READY) and (tcb == knlink.knl_ctxtsk)) {
-            pk_rtsk.tskstat = TSTAT.TTS_RUN;
+        if ((state == TSTAT.READY) and (tcb == knlink.knl_ctxtsk)) {
+            pk_rtsk.tskstat = syscall.TTS_RUN;
         } else {
             pk_rtsk.tskstat = @as(usize, state) << 1;
         }
-        if ((state & TSTAT.TS_WAIT) != 0) {
+        if ((state & TSTAT.WAIT) != 0) {
             pk_rtsk.tskwait = tcb.wspec.tskwait;
             pk_rtsk.wid = tcb.wid;
         }
@@ -425,8 +422,8 @@ pub fn tk_rel_wai(tskid: u32) TkError!void {
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
     var state: TSTAT = @as(TSTAT, tcb.state);
-    if ((state & TSTAT.TS_WAIT) == 0) {
-        if (state == TSTAT.TS_NONEXIST) {
+    if ((state & TSTAT.WAIT) == 0) {
+        if (state == TSTAT.NONEXIST) {
             return TkError.E_NOEXS;
         } else {
             return TkError.E_OBJ;

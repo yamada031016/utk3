@@ -34,7 +34,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
     // Startup Hardware
     hw_setting.knl_startup_hw();
     if (dbg) {
-        knlink.sysdepend.devinit.knl_start_device();
+        // knlink.sysdepend.devinit.knl_start_device();
     }
 
     if (comptime !config.USE_STATIC_IVT) {

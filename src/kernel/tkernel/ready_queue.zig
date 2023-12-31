@@ -96,13 +96,12 @@ pub fn RdyQueue() type {
 
             if (target) |elem| {
                 // elem: *TCB
-                var tsk = tcb.tskque.?.next;
-                while (tsk != null) : (tsk = tsk.?.tskque.?.next) {}
-                tsk = elem;
-                // tcb.tskque.?.*.prev = elem.tskque.?.prev;
-                // tcb.tskque.?.*.next = elem;
-                // elem.tskque.?.prev.?.tskque.?.next = tcb;
-                // elem.tskque.?.prev = tcb;
+                elem.tskque.?.prev = tcb;
+                tcb.tskque.?.next = elem;
+                tcb.tskque.?.prev = elem.tskque.?.prev;
+                // var tsk = tcb.tskque.?.next;
+                // while (tsk != null) : (tsk = tsk.?.tskque.?.next) {}
+                // tsk = elem;
             } else {
                 this.tskque[priority] = tcb;
             }

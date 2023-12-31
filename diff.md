@@ -1,0 +1,3 @@
+- .textのalignがdbg:8, rf: 4
+-> *.ldにはalign(8)って書いてる
+-

@@ -22,19 +22,19 @@ const serial = @import("devices").serial;
 const print = serial.print;
 
 pub const TSTAT = enum(u8) {
-    TS_NONEXIST = 0, // Unregistered state */
-    TS_READY = 1, // RUN or READY state */
-    TS_WAIT = 2, // WAIT state */
-    TS_SUSPEND = 4, // SUSPEND state */
-    TS_WAITSUS = 6, // Both WAIT and SUSPEND state */
-    TS_DORMANT = 8, // DORMANT state */
+    NONEXIST = 0, // Unregistered state */
+    READY = 1, // RUN or READY state */
+    WAIT = 2, // WAIT state */
+    SUSPEND = 4, // SUSPEND state */
+    WAITSUS = 6, // Both WAIT and SUSPEND state */
+    DORMANT = 8, // DORMANT state */
 };
 
 pub export var knl_dispatch_disabled: bool = false;
 
 // * If the task is alive ( except NON-EXISTENT,DORMANT ), return TRUE.
 pub inline fn knl_task_alive(state: TSTAT) bool {
-    return (state & (TSTAT.TS_READY | TSTAT.TS_WAIT | TSTAT.TS_SUSPEND)) != 0;
+    return (state & (TSTAT.READY | TSTAT.WAIT | TSTAT.SUSPEND)) != 0;
 }
 
 // * Task priority internal/external expression conversion macro
@@ -68,7 +68,7 @@ fn knl_tcb_table_init() void {
                 .ipriority = 32,
                 .bpriority = 32,
                 .priority = 32, //min Pri
-                .state = TSTAT.TS_DORMANT,
+                .state = TSTAT.NONEXIST,
                 .wid = 999,
                 .wupcnt = 999,
                 .suscnt = 999,
@@ -114,11 +114,11 @@ fn knl_tcb_table_init() void {
 pub var knl_free_tcb = TkQueue(?*TCB).init();
 
 // * Get TCB from task ID.
-pub fn get_tcb(id: usize) *TCB {
+pub inline fn get_tcb(id: usize) *TCB {
     return knl_tcb_table[knldef.INDEX_TSK(id)];
 }
 
-pub fn get_tcb_self(id: isize) TCB {
+pub inline fn get_tcb_self(id: isize) TCB {
     if (id == syscall.TSK_SELF) {
         return knlink.knl_ctxtsk.?.*;
     } else {
@@ -205,7 +205,7 @@ pub fn knl_task_initialize() TkError!void {
         // if (i == 0) {
         // serial.hexdump("tcb addr", @intFromPtr(tcb));
         // }
-        tcb.state = TSTAT.TS_NONEXIST;
+        tcb.state = TSTAT.NONEXIST;
         // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
         //     tcb.wrdvno = tskid;
         // }
@@ -221,7 +221,7 @@ pub fn knl_make_dormant(tcb: *TCB) void {
     defer print("knl_make_dormant end");
 
     // Initialize variables which should be reset at DORMANT state */
-    tcb.state = TSTAT.TS_DORMANT;
+    tcb.state = TSTAT.DORMANT;
     tcb.bpriority = tcb.ipriority;
     tcb.priority = tcb.bpriority;
     tcb.sysmode = tcb.isysmode;
@@ -246,7 +246,7 @@ pub fn knl_make_dormant(tcb: *TCB) void {
 // *	Update the task state and insert in the ready queue. If necessary,
 // *	update 'knl_schedtsk' and request to start task dispatcher.
 pub fn knl_make_ready(tcb: *TCB) void {
-    tcb.state = TSTAT.TS_READY;
+    tcb.state = TSTAT.READY;
     if (ready_queue.knl_ready_queue.insert(tcb)) {
         knlink.knl_schedtsk = tcb;
     }
@@ -266,7 +266,7 @@ pub fn knl_make_non_ready(tcb: *TCB) void {
 
 // * Change task priority.
 pub fn knl_change_task_priority(tcb: *TCB, priority: PRI) void {
-    if (tcb.state == TSTAT.TS_READY) {
+    if (tcb.state == TSTAT.READY) {
         // * When deleting a task from the ready queue,
         // * a value in the 'priority' field in TCB is needed.
         // * Therefore you need to delete the task from the

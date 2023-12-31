@@ -8,10 +8,10 @@
 //     }
 // }
 // else{
-pub fn _BIT_SET_N(n: i32) i32 {
+pub inline fn _BIT_SET_N(n: i32) i32 {
     return 0x01 << ((n) & 7);
 }
-pub fn _BIT_SHIFT(n: u8) i32 {
+pub inline fn _BIT_SHIFT(n: u8) i32 {
     return n << 1;
 }
 // }

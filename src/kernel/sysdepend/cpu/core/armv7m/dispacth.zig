@@ -88,11 +88,8 @@ pub fn knl_dispatch_entry() callconv(.C) void {
         \\  pop	{r4-r11}
     );
     knl_dispatch_disabled = false;
-    // int.core.set_basepri(0);
+    int.core.set_basepri(0);
     asm volatile (
         \\  bx	lr
-        // \\ bx %[task]
-        // :
-        // : [task] "r" (knl_ctxtsk.?.tskctxb.ssp.pc),
     );
 }

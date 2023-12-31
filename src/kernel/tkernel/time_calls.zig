@@ -36,7 +36,7 @@ const CYCCB = struct {
 pub const knl_cyccb_table: []CYCCB = undefined; // Cyclic handler control block */
 pub const knl_free_cyccb: QUEUE = undefined; // FreeQue */
 
-fn get_cyccb(id: u32) CYCCB {
+inline fn get_cyccb(id: u32) CYCCB {
     return &knl_cyccb_table[knldef.INDEX_CYC(id)];
 }
 
@@ -76,7 +76,7 @@ const ALMCB = struct {
 pub const knl_almcb_table: []ALMCB = undefined; // Alarm handler control block */
 pub const knl_free_almcb: QUEUE = undefined; // FreeQue */
 
-fn get_almcb(id: u32) ALMCB {
+inline fn get_almcb(id: u32) ALMCB {
     return &knl_almcb_table[knldef.INDEX_ALM(id)];
 }
 

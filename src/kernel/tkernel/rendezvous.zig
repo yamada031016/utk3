@@ -19,7 +19,7 @@
 // pub const knl_porcb_table:[]PORCB = undefined;	// Rendezvous port control block */
 // pub const knl_free_porcb: QUEUE = undefined;	// FreeQue */
 //
-// fn get_porcb(id: i8) PORCB { return (&knl_porcb_table[INDEX_POR(id)]); }
+//  inline fn get_porcb(id: i8) PORCB { return (&knl_porcb_table[INDEX_POR(id)]); }
 //
 // #define RDVNO_SHIFT	(sizeof(RNO)*8/2)
 //

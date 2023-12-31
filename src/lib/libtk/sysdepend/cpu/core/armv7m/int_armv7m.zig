@@ -27,7 +27,7 @@ pub fn CheckInt_nvic(intno: usize) bool {
 //CPU Interrupt Control for ARM Cortex-M4.
 
 //Set Base Priority register
-pub fn set_basepri(intsts: u32) void {
+pub inline fn set_basepri(intsts: u32) void {
     // serial.print("set_basepri() start");
     // defer serial.print("set_basepri() end");
     asm volatile ("msr basepri, %[_intsts]"

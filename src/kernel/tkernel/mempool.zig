@@ -32,7 +32,7 @@
 //  pub const knl_free_mplcb:  QUEUE = undefined;	// FreeQue */
 //
 //  //i8はテキトー
-// fn get_mplcb(id: i8) MPLCB{ return &knl_mplcb_table[INDEX_MPL(id)]; }
+//  inline fn get_mplcb(id: i8) MPLCB{ return &knl_mplcb_table[INDEX_MPL(id)]; }
 //
 //
 // // * Maximum free area size

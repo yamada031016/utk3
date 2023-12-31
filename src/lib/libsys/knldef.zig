@@ -34,7 +34,7 @@ pub const SYSTEMAREA_END = config.CNF_SYSTEMAREA_END;
 pub const MIN_TSKPRI = 1; // Minimum priority number = highest priority */
 pub const MAX_TSKPRI = config.CNF_MAX_TSKPRI; // Maximum priority number = lowest priority */
 pub const NUM_TSKPRI = config.CNF_MAX_TSKPRI; // Number of priority levels */
-pub fn CHK_PRI(pri: PRI) bool {
+pub inline fn CHK_PRI(pri: PRI) bool {
     return (MIN_TSKPRI <= pri and pri <= MAX_TSKPRI);
 }
 
@@ -47,13 +47,13 @@ pub const TIMER_PERIOD = config.CNF_TIMER_PERIOD;
 pub const MIN_TSKID = 1;
 pub const MAX_TSKID = config.CNF_MAX_TSKID;
 pub const NUM_TSKID = MAX_TSKID;
-pub fn CHK_TSKID(id: ID) bool {
+pub inline fn CHK_TSKID(id: ID) bool {
     return MIN_TSKID <= id and id <= MAX_TSKID;
 }
-pub fn INDEX_TSK(id: ID) usize {
+pub inline fn INDEX_TSK(id: ID) usize {
     return id - MIN_TSKID;
 }
-pub fn ID_TSK(index: usize) usize {
+pub inline fn ID_TSK(index: usize) usize {
     return index + MIN_TSKID;
 }
 

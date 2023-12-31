@@ -1,5 +1,5 @@
-//micro T-Kernel System Calls */
-//
+//micro T-Kernel System Calls
+
 const TkError = @import("libtk").errno.TkError;
 const PRI = @import("libtk").typedef.PRI;
 

@@ -24,18 +24,18 @@
 // pub const knl_free_mtxcb: QUEUE=undefined;	// FreeQue */
 //
 //  //i8は適当
-// fn get_mtxcb(id: i8) MTXCB{ return( &knl_mtxcb_table[INDEX_MTX(id)]); }
+// inline fn get_mtxcb(id: i8) MTXCB{ return( &knl_mtxcb_table[INDEX_MTX(id)]); }
 //
 // // * If there is a mutex 'mtxcb' with the task of lock wait, it is TRUE
-// fn mtx_waited(mtxcb: MTXCB) bool {return( !isQueEmpty(&(mtxcb).wait_queue)); }
+// inline fn mtx_waited(mtxcb: MTXCB) bool {return( !isQueEmpty(&(mtxcb).wait_queue)); }
 //
 // // * Return the highest priority in the task of lock wait at mutex 'mtxcb'
 //  // priorityの型がわからんのでi8にした
-// fn mtx_head_pri(mtxcb: MTXCB) i8{return( (@as(*TCB,mtxcb).wait_queue.next).priority );}
+// inline fn mtx_head_pri(mtxcb: MTXCB) i8{return( (@as(*TCB,mtxcb).wait_queue.next).priority );}
 //
 // // * Reset priority of lock get task (For TA_INHERIT only)
 //  // knl_release_mutexがエラーあるんかわからん
-// fn reset_priority(tcb: TCB) void { knl_release_mutex(tcb, null);}
+// inline fn reset_priority(tcb: TCB) void { knl_release_mutex(tcb, null);}
 //
 // // IMPORT void knl_release_mutex( TCB *tcb, MTXCB *relmtxcb );
 //

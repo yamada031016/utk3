@@ -15,18 +15,18 @@ const INT_BITWIDTH = inc_sys.machine.INT_BITWIDTH;
 // USE_MULTI_LOCKがfalseなのでmlock*は定義されていない
 // * Lock for device management exclusive control
 // pub const knl_DevMgrLock: syslib.FastMLock = undefined;
-// fn LockDM() void {
+// inline fn LockDM() void {
 //     fastmlock.MLock(&knl_DevMgrLock, 0);
 // }
-// fn UnlockDM() void {
+// inline fn UnlockDM() void {
 //     fastmlock.MUnlock(&knl_DevMgrLock, 0);
 // }
 //
 // // * Lock for device registration exclusive control
-// fn LockREG() void {
+// inline fn LockREG() void {
 //     fastmlock.MLock(&knl_DevMgrLock, 1);
 // }
-// fn UnlockREG() void {
+// inline fn UnlockREG() void {
 //     fastmlock.MUnlock(&knl_DevMgrLock, 1);
 // }
 
@@ -42,17 +42,17 @@ pub var knl_DevCBtbl: []DevCB = undefined;
 // Device registration information table */
 pub var knl_UsedDevCB: QUEUE = undefined; // In-use queue */
 
-pub fn DID(devcb: DevCB) u8 {
+pub inline fn DID(devcb: DevCB) u8 {
     return (devcb - knl_DevCBtbl + 1) << 8;
 }
 // u8, ID tekito
-pub fn DEVID(devcb: DevCB, unitno: u8) u8 {
+pub inline fn DEVID(devcb: DevCB, unitno: u8) u8 {
     return DID(devcb) + unitno;
 }
-pub fn DEVCB(devid: isize) u8 {
+pub inline fn DEVCB(devid: isize) u8 {
     return knl_DevCBtbl + (devid >> 8) - 1;
 }
-pub fn UNITNO(devid: isize) u8 {
+pub inline fn UNITNO(devid: isize) u8 {
     return devid & 0xff;
 }
 
@@ -78,7 +78,7 @@ pub const OpnCB = struct {
 };
 
 // rqの型は多分これ？
-pub fn RESQ_OPNCB(rq: OpnCB) u8 {
+pub inline fn RESQ_OPNCB(rq: OpnCB) u8 {
     return @as(*OpnCB, @as(*i8, rq) - tkernel.offsetof(OpnCB, resq));
 }
 
