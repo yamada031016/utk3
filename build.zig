@@ -26,6 +26,7 @@ pub fn build(b: *std.Build) !void {
     const knlink = b.createModule(.{ .source_file = .{ .path = "src/kernel/knlink.zig" } });
     const libsys = b.createModule(.{ .source_file = .{ .path = "src/lib/libsys/libsys.zig" } });
     const libtk = b.createModule(.{ .source_file = .{ .path = "src/lib/libtk/libtk.zig" } });
+    const libtm = b.createModule(.{ .source_file = .{ .path = "src/lib/libtm/libtm.zig" } });
 
     try config.dependencies.put("config", config);
     exe.addModule("config", config);
@@ -47,11 +48,17 @@ pub fn build(b: *std.Build) !void {
     try libtk.dependencies.put("devices", devices);
     exe.addModule("libtk", libtk);
 
+    try libtm.dependencies.put("libtm", libtm);
+    try libtm.dependencies.put("libtk", libtk);
+    try libtm.dependencies.put("devices", devices);
+    exe.addModule("libtm", libtm);
+
     try knlink.dependencies.put("knlink", knlink);
     try knlink.dependencies.put("config", config);
     try knlink.dependencies.put("devices", devices);
     try knlink.dependencies.put("libsys", libsys);
     try knlink.dependencies.put("libtk", libtk);
+    try knlink.dependencies.put("libtm", libtm);
     exe.addModule("knlink", knlink);
 
     exe.setLinkerScript(.{ .path = "./tkernel_map.ld" });

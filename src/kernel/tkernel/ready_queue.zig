@@ -9,7 +9,8 @@ const PRI = libtk.typedef.PRI;
 const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
 const INT_BITWIDTH = libsys.machine.INT_BITWIDTH;
-const serial = @import("devices").serial;
+const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 // * Definition of ready queue structure
 // *	In the ready queue, the task queue 'tskque' is provided per priority.
@@ -88,8 +89,8 @@ pub fn RdyQueue() type {
         // *	update 'top_priority' if necessary. When updating 'top_priority,'
         // *	return TRUE, otherwise FALSE.
         pub fn insert(this: *This, tcb: *TCB) bool {
-            serial.print("rdyque insert start");
-            defer serial.print("rdyque insert end");
+            tm_printf("rdyque insert start", .{});
+            defer tm_printf("rdyque insert end", .{});
 
             const priority: usize = tcb.priority;
             const target: ?*TCB = this.tskque[priority];
@@ -107,7 +108,7 @@ pub fn RdyQueue() type {
             }
 
             if (knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-                serial.print("rdyque before bitmap");
+                tm_printf("rdyque before bitmap", .{});
                 this.bitmap[0] |= @as(usize, 1) << @as(u5, @intCast(priority));
             } else {
                 tstd.knl_bitset(this.bitmap, priority);
@@ -121,7 +122,7 @@ pub fn RdyQueue() type {
             // safe:    52464
             // Fast:    51604
             // Small:   8528
-            serial.print("rdyque before pri");
+            tm_printf("rdyque before pri", .{});
             if (priority < this.top_priority + 1) {
                 // serial.print("trueやでぇ！");
                 this.top_priority = priority;

@@ -17,17 +17,17 @@ const syscall = libtk.syscall;
 const TkError = libtk.errno.TkError;
 const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
-const serial = @import("devices").serial;
-const print = serial.print;
 const config = @import("config");
 const ATR = libtk.typedef.ATR;
 const PRI = libtk.typedef.PRI;
+const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 // * Create task
 pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
-    print("tk_cre_tsk start.");
-    defer print("tk_cre_tsk end.");
-    errdefer print("tk_cre_tsk failed.");
+    tm_printf("tk_cre_tsk start.", .{});
+    defer tm_printf("tk_cre_tsk end.", .{});
+    errdefer libtm.tm_eprintf("tk_cre_tsk failed.", .{});
     // Valid value of task attribute */
     var VALID_TSKATR: ATR = if (comptime config.CHK_RSATR) syscall.TA_HLNG | syscall.TA_RNG3 | syscall.TA_USERBUF | syscall.TA_COPS else undefined;
     if (comptime (config.CHK_RSATR and config.USE_OBJECT_NAME)) {
@@ -160,11 +160,12 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 }
 // }
 
-// * Start task
+// Start task
 pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
-    print("tk_sta_tsk start.");
-    defer print("tk_sta_tsk end.");
-    errdefer serial.eprint("tk_sta_tsk failed.");
+    // tm_printf("tk_sta_tsk start.", .{});
+    @import("devices").serial.print("tk_sta_tsk start.");
+    defer tm_printf("tk_sta_tsk end.", .{});
+    errdefer libtm.tm_eprintf("tk_sta_tsk failed.", .{});
     check.CHECK_TSKID(tskid) catch |err| {
         return err;
     };
@@ -258,13 +259,13 @@ pub fn tk_exd_tsk() void {
     // Check context error */
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
-            print("tk_exd_tsk was called in the task independent");
+            tm_printf("tk_exd_tsk was called in the task independent", .{});
             return;
         }
     }
     if (comptime config.CHK_CTX1) {
         if (cpu_status.in_ddsp()) {
-            print("tk_exd_tsk was called in the dispatch disabled");
+            tm_printf("tk_exd_tsk was called in the dispatch disabled", .{});
         }
     }
 

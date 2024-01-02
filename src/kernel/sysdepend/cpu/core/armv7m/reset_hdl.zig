@@ -7,10 +7,11 @@ const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
 const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
-const print = @import("devices").serial.print;
 const serial = @import("devices").serial;
 const hexdump = serial.hexdump;
 const intPrint = serial.intPrint;
+const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 const builtin = @import("builtin");
 const dbg = builtin.mode == .Debug;
@@ -34,7 +35,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
     // Startup Hardware
     hw_setting.knl_startup_hw();
     if (dbg) {
-        // knlink.sysdepend.devinit.knl_start_device();
+        knlink.sysdepend.devinit.knl_start_device();
     }
 
     if (comptime !config.USE_STATIC_IVT) {
@@ -87,7 +88,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
         // hexdump("after data_top addr", @intFromPtr(data_top));
         // hexdump("after data_end addr", @intFromPtr(data_end));
     }
-    print("\x1b[32m<>Reset_Handler!!!\x1b[0m");
+    tm_printf("\x1b[32m<>Reset_Handler!!!\x1b[0m", .{});
 
     // Initialize .bss
     // if (comptime config.USE_NOINIT) {

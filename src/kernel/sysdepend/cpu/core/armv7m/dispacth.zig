@@ -14,14 +14,15 @@ extern const TCB_tskatr: usize;
 extern var knl_dispatch_disabled: bool;
 const knl_tmp_stack = knlink.sysdepend.core.cpu_cntl.knl_tmp_stack;
 // extern const knl_tmp_stack: [TMP_STACK_SIZE]u8;
-const print = @import("devices").serial.print;
+const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 const intpri = INTPRI_VAL(INTPRI_MAX_EXTINT_PRI);
 
 pub fn knl_dispatch_entry() callconv(.C) void {
-    print("launched Pend SV Handler");
-    print("knl_dispatch_entry start.");
-    defer print("knl_dispatch_entry end.");
+    tm_printf("launched Pend SV Handler", .{});
+    tm_printf("knl_dispatch_entry start.", .{});
+    defer tm_printf("knl_dispatch_entry end.", .{});
 
     knl_dispatch_disabled = true;
     const tmp_stack = @as(*usize, @ptrFromInt(@intFromPtr(&knl_tmp_stack) + TMP_STACK_SIZE));
@@ -34,9 +35,9 @@ pub fn knl_dispatch_entry() callconv(.C) void {
         \\.align 2
     );
 
-    print("before save ctxtsk context");
+    tm_printf("before save ctxtsk context", .{});
     if (knl_ctxtsk != null) {
-        print("knl_ctxtsk is not NULL");
+        tm_printf("knl_ctxtsk is not NULL", .{});
         asm volatile (
             \\  push	{r4-r11,lr}
             // \\  push	{lr}
@@ -51,7 +52,7 @@ pub fn knl_dispatch_entry() callconv(.C) void {
         knl_ctxtsk = null;
     }
 
-    print("before set tmp_stack");
+    tm_printf("before set tmp_stack", .{});
     asm volatile (
         \\  ldr	sp, %[_tmp_stack]    // Set temporal stack
         :
@@ -59,10 +60,10 @@ pub fn knl_dispatch_entry() callconv(.C) void {
     );
 
     while (true) {
-        print("before dispatch ctxtsk to schedtsk");
+        tm_printf("before dispatch ctxtsk to schedtsk", .{});
         int.core.set_basepri(intpri);
         if (knl_schedtsk != null) {
-            print("knl_schedtsk is not null");
+            tm_printf("knl_schedtsk is not null", .{});
             knl_ctxtsk = knl_schedtsk;
             asm volatile (
                 \\  ldr	sp, %[ssp] // Restore ssp from TCB
@@ -72,9 +73,9 @@ pub fn knl_dispatch_entry() callconv(.C) void {
             break;
         }
 
-        print("before low_pow()");
+        tm_printf("before low_pow()", .{});
         if (!knl_lowpow_discnt) {
-            print("execute low_pow()");
+            tm_printf("execute low_pow()", .{});
             // This function is unimplement.
             low_pow();
         }
@@ -82,7 +83,7 @@ pub fn knl_dispatch_entry() callconv(.C) void {
     }
 
     // ----------------- Restore "schedtsk" context. -----------------
-    print("before restore schedtsk context");
+    tm_printf("before restore schedtsk context", .{});
     asm volatile (
         \\  pop	{lr}
         \\  pop	{r4-r11}

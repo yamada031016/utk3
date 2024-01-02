@@ -3,8 +3,8 @@ const knlink = @import("knlink");
 const task = knlink.task;
 const TCB = knlink.TCB;
 const config = @import("config");
-const serial = @import("devices").serial;
-const print = serial.print;
+const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 // if (comptime  _SYSDEPEND_CPU_CORE_CPUTASK_) {
 // System stack configuration at task startup */
@@ -46,8 +46,8 @@ pub const DORMANT_STACK_SIZE = @sizeOf(i32); //7  // To 'R4' position */
 // Create stack frame for task startup
 //Call from 'make_dormant()'
 pub fn knl_setup_context(tcb: *TCB) void {
-    print("knl_setup_context started.");
-    defer print("knl_setup_context end.");
+    tm_printf("knl_setup_context started.", .{});
+    defer tm_printf("knl_setup_context end.", .{});
     var ssp: *SStackFrame = tcb.isstack;
     // pointerのデクリメント
     ssp = @ptrFromInt(@intFromPtr(ssp) - @sizeOf(SStackFrame));
@@ -63,8 +63,8 @@ pub fn knl_setup_context(tcb: *TCB) void {
 // Set task startup code
 //Called by 'tk_sta_tsk()' processing.
 pub inline fn knl_setup_stacd(tcb: *TCB, stacd: usize) void {
-    print("knl_setup_stacd started.");
-    defer print("knl_setup_stacd end.");
+    tm_printf("knl_setup_stacd started.", .{});
+    defer tm_printf("knl_setup_stacd end.", .{});
     // var ssp: *SStackFrame = tcb.tskctxb.ssp;
     tcb.tskctxb.ssp.r[0] = stacd;
     tcb.tskctxb.ssp.r[1] = @as(usize, @intFromPtr(tcb.exinf));

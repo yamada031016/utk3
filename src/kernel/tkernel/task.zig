@@ -18,8 +18,8 @@ const TkError = libtk.errno.TkError;
 const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
 const PRI = libtk.typedef.PRI;
-const serial = @import("devices").serial;
-const print = serial.print;
+const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 pub const TSTAT = enum(u8) {
     NONEXIST = 0, // Unregistered state */
@@ -183,9 +183,9 @@ pub inline fn knl_reschedule() void {
 
 // * TCB Initialization
 pub fn knl_task_initialize() TkError!void {
-    print("\x1b[32m<>knl_task_initialize() start.\x1b[0m");
-    defer print("knl_task_initialize() end");
-    errdefer print("knl_task_initialize() failed");
+    tm_printf("\x1b[32m<>knl_task_initialize() start.\x1b[0m", .{});
+    defer tm_printf("knl_task_initialize() end", .{});
+    errdefer libtm.tm_eprintf("knl_task_initialize() failed", .{});
     // Get system information */
     if (knldef.NUM_TSKID < 1) {
         return TkError.SystemError;
@@ -217,8 +217,8 @@ pub fn knl_task_initialize() TkError!void {
 
 // * Prepare task execution.
 pub fn knl_make_dormant(tcb: *TCB) void {
-    print("knl_make_dormant start");
-    defer print("knl_make_dormant end");
+    tm_printf("knl_make_dormant start", .{});
+    defer tm_printf("knl_make_dormant end", .{});
 
     // Initialize variables which should be reset at DORMANT state */
     tcb.state = TSTAT.DORMANT;
