@@ -42,14 +42,12 @@ pub fn main() !void {
     }
 
     // Initialize Device before micro T-Kernel starts
-    // unimplement!
     devinit.knl_init_device() catch |err| {
         serial.eprint("knl_init_device() failed.");
         return err;
     };
 
     // Interrupt initialize
-    // unimplement!
     interrupt.knl_init_interrupt() catch |err| {
         serial.eprint("knl_init_interrupt() failed.");
         return err;
@@ -73,6 +71,7 @@ pub fn main() !void {
         return err;
     };
 
+    @import("libtm").intPrint("sysinit time:", @intCast(knlink.timer.knl_current_time));
     // Create & start initial task
     if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
         if (tskmng.tk_sta_tsk(tskid, 0)) {

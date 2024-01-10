@@ -1,5 +1,5 @@
 // *	Fixed Size Memory Pool
-// const knlink = @import("knlink");
+const knlink = @import("knlink");
 // const inc_sys = @import("inc_sys");
 // const queue = inc_sys.queue;
 // const QUEUE = queue.QUEUE;
@@ -41,12 +41,6 @@
 // inline fn knl_mempool_end( mpfcb: *MPFCB ) *void {
 // 	return (@as(*i8,mpfcb.mempool) + mpfcb.mpfsz);
 // }
-//
-// // #include "kernel.h"
-// // #include "klock.h"
-// // #include "wait.h"
-// // #include "check.h"
-// // #include "mempfix.h"
 //
 //
 // Noinit(EXPORT MPFCB	knl_mpfcb_table[NUM_MPFID]);	// Fixed size memory pool control block */
@@ -339,7 +333,6 @@
 //
 // 	return ercd;
 // }
-//
 // #ifdef USE_FUNC_TK_REF_MPF
 // //
 //  * Check fixed size pool state

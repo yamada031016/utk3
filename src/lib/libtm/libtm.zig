@@ -27,11 +27,34 @@ pub fn tm_putstring(string: []const u8) void {
 }
 
 pub fn tm_printf(comptime string: []const u8, args: anytype) void {
-    _ = args;
-    if (comptime dbg) {
+    // if (comptime dbg) {
+    if (args.len != 0) {
+        switch (@TypeOf(args[0])) {
+            isize,
+            i64,
+            i32,
+            i16,
+            i8,
+            u64,
+            u32,
+            u16,
+            u8,
+            usize,
+            comptime_int,
+            => {
+                var hoge = fmtDec(@intCast(args[0]));
+                tm_putstring(string);
+                tm_putchar('\t');
+                tm_putstring(hoge);
+            },
+            []const u8, []u8 => tm_putstring(args[0], .{}),
+            else => tm_putstring("elseや"),
+        }
+    } else {
         tm_putstring(string);
     }
     tm_putstring("\r\n");
+    // }
 }
 
 // fn format(string: []const u8, args: anytype) []const u8 {
@@ -94,12 +117,82 @@ pub fn tm_printf(comptime string: []const u8, args: anytype) void {
 //     }
 //     // }
 // }
+pub fn intPrint(string: []const u8, decimal: usize) void {
+    serial.puts(string);
+    serial.puts("\t\t");
+    var vdata = decimal;
+    var buf: [10]usize = [_]usize{100} ** 10;
+    for (0..9) |i| {
+        buf[9 - i] = vdata % 10;
+        vdata /= 10;
+        if (vdata == 0)
+            break;
+    }
+    for (buf) |value| {
+        if (value > 10) {
+            // serial.print(">10");
+            continue;
+        }
+        switch (value) {
+            0 => serial.put('0'),
+            1 => serial.put('1'),
+            2 => serial.put('2'),
+            3 => serial.put('3'),
+            4 => serial.put('4'),
+            5 => serial.put('5'),
+            6 => serial.put('6'),
+            7 => serial.put('7'),
+            8 => serial.put('8'),
+            9 => serial.put('9'),
+            else => serial.puts("elseや"),
+        }
+    }
+    serial.puts("\r\n");
+}
+pub fn hexPrint(string: []const u8, decimal: usize) void {
+    serial.puts(string);
+    serial.puts("\t\t");
+    var vdata = decimal;
+    var buf: [10]usize = undefined;
+    for (0..9) |i| {
+        buf[9 - i] = vdata % 16;
+        vdata /= 16;
+        if (vdata == 0)
+            break;
+    }
+    for (buf) |value| {
+        if (value > 15) {
+            // serial.print(">10");
+            continue;
+        }
+        switch (value) {
+            0 => serial.put('0'),
+            1 => serial.put('1'),
+            2 => serial.put('2'),
+            3 => serial.put('3'),
+            4 => serial.put('4'),
+            5 => serial.put('5'),
+            6 => serial.put('6'),
+            7 => serial.put('7'),
+            8 => serial.put('8'),
+            9 => serial.put('9'),
+            10 => serial.put('A'),
+            11 => serial.put('B'),
+            12 => serial.put('C'),
+            13 => serial.put('D'),
+            14 => serial.put('E'),
+            15 => serial.put('F'),
+            else => unreachable,
+        }
+    }
+    tm_putstring("\r\n");
+}
 
 fn fmtDec(decimal: usize) []u8 {
     var vdata = decimal;
     var buf: [10]usize = undefined;
-    var str: [10]usize = undefined;
-    for (0..127) |i| {
+    var str: [10]u8 = undefined;
+    for (0..9) |i| {
         buf[9 - i] = vdata % 10;
         vdata /= 10;
         if (vdata == 0)
@@ -125,7 +218,7 @@ fn fmtDec(decimal: usize) []u8 {
             else => unreachable,
         }
     }
-    return str;
+    return str[0..9];
 }
 
 fn fmtHex(number: usize) []u8 {

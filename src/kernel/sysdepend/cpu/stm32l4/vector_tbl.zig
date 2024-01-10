@@ -20,9 +20,12 @@ pub fn irq_handler() callconv(.C) void {
 }
 
 pub fn systick_handler() callconv(.C) void {
-    print("launched systick handler!");
-    // return;
-    while (true) {}
+    // print("launched systick handler!");
+    knlink.timer.knl_timer_handler();
+    // @import("libtm").tm_printf("current time:", .{knlink.timer.knl_current_time});
+    // @import("libtm").intPrint("utk3が時刻をお知らせします.", @intCast(knlink.timer.knl_current_time));
+    return;
+    // while (true) {}
 }
 
 pub fn default_handler() callconv(.C) void {

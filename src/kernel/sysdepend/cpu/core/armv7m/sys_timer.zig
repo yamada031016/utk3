@@ -28,7 +28,7 @@ pub inline fn knl_start_hw_timer() void {
     write(sysdef.core.SYST_RVR, n);
 
     // Start timer count
-    // write(sysdef.core.SYST_CSR, 0x00000007);
+    write(sysdef.core.SYST_CSR, 0x00000007);
 }
 
 //Clear timer interrupt

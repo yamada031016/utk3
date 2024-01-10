@@ -16,6 +16,7 @@ SECTIONS {
 		*(.text.*)
 		*(.rodata)
 		*(.rodata.*)
+        __rom_end = .;
 	} >ROM
 	. = ALIGN(4);
 	__data_org = .;
@@ -31,7 +32,7 @@ SECTIONS {
 		. = ALIGN(4);
 		__data_end = .;
 	} >RAM
-	.bss ALIGN(8) (NOLOAD) : {
+	.bss ALIGN(4) (NOLOAD) : {
 		__bss_start = .;
 		PROVIDE (__noinit_start = .);
 		*(.noinit)

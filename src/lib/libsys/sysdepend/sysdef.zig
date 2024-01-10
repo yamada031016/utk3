@@ -28,3 +28,23 @@ pub const TMCLK_KHz = TMCLK * 1000; // System timer clock input (kHz) */
 // Maximum value of Power-saving mode switching prohibition request.
 //Use in tk_set_pow API. */
 pub const LOWPOW_LIMIT = 0x7fff; // Maximum number for disabling */
+//
+
+// TIM16
+const TIM16_BASE: usize = 0x4001_4400;
+pub const TIM16 = enum(usize) {
+    CR1 = TIM16_BASE + 0x0, // Clock control register */
+    CR2 = TIM16_BASE + 0x4, // Clock control register */
+    DIER = TIM16_BASE + 0x000C, // Internal clock sources calibration register */
+    SR = TIM16_BASE + 0x0010, // Clock configuration register */
+    EGR = TIM16_BASE + 0x0014, // PLL configuration register */
+    CCMR1 = TIM16_BASE + 0x0018, // PLL configuration register */
+    CCER = TIM16_BASE + 0x0020, // PLL configuration register */
+    CNT = TIM16_BASE + 0x0024, // PLL configuration register */
+    PSC = TIM16_BASE + 0x0028, // prescalar configuration register */
+    ARR = TIM16_BASE + 0x002C, // auto-reload configuration register */
+    RCR = TIM16_BASE + 0x0030, // repetition counter register */
+    CCR1 = TIM16_BASE + 0x0034, // capture/compare register */
+    BDTR = TIM16_BASE + 0x0044, // capture/compare register */
+    OR1 = TIM16_BASE + 0x0050, // capture/compare register */
+};

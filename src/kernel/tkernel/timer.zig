@@ -183,33 +183,33 @@ pub fn knl_timer_handler() void {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
         knl_current_time = knl_current_time + knldef.TIMER_PERIOD;
-        var cur: u32 = knl_current_time;
+        // var cur: u32 = knl_current_time;
 
-        // if (comptime USE_DBGSPT and defined(USE_FUNC_TD_INF_TSK)) {
-        //     if (knl_ctxtsk != null) {
-        //         // Task at execution */
-        //         if (knl_ctxtsk.sysmode > 0) {
-        //             knl_ctxtsk.stime += knldef.TIMER_PERIOD;
-        //         } else {
-        //             knl_ctxtsk.utime += knldef.TIMER_PERIOD;
-        //         }
+        // if (comptime config.USE_DBGSPT and defined(USE_FUNC_TD_INF_TSK)) {
+        // if (knlink.knl_ctxtsk) |task| {
+        //     // Task at execution */
+        //     if (task.sysmode > 0) {
+        //         task.stime += knldef.TIMER_PERIOD;
+        //     } else {
+        //         task.utime += knldef.TIMER_PERIOD;
         //     }
+        // }
         // }
 
         // Execute event that passed occurring time. */
-        while (!queue.isQueEmpty(&knl_timer_queue)) {
-            const event = @as(*TMEB, knl_timer_queue.next);
-
-            if (!knl_abstim_reached(cur, event.time)) {
-                break;
-            }
-
-            queue.QueRemove(event.?.queue);
-            if (event.*.callback != null) {
-                // どうかけばええんや
-                (event.*.callback)(event.arg);
-            }
-        }
+        // while (!queue.isQueEmpty(&knl_timer_queue)) {
+        //     const event = @as(*TMEB, knl_timer_queue.next);
+        //
+        //     if (!knl_abstim_reached(cur, event.time)) {
+        //         break;
+        //     }
+        //
+        //     queue.QueRemove(event.?.queue);
+        //     if (event.*.callback != null) {
+        //         // どうかけばええんや
+        //         (event.*.callback)(event.arg);
+        //     }
+        // }
     }
     sys_timer.knl_end_of_hw_timer_interrupt(); // Clear timer interrupt */
 }

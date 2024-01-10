@@ -9,44 +9,50 @@ const SZ = @import("libtk").typedef.SZ;
 // *  Order of members must not be changed because members are used
 // *  with casting from MPLCB.
 pub const IMACB = struct {
+    const This = @This();
+    const Node = struct {
+        next: This,
+        prev: This,
+    };
     memsz: SZ,
     // AreaQue for connecting each area where reserved pages are
     // divided Sort in ascending order of addresses in a page.
-    // Do not sort between pages. */
-    areaque: QUEUE,
+    // Do not sort between pages.
+    areaque: ?*Node,
     // FreeQue for connecting unused area in reserved pages
-    // Sort from small to large free spaces. */
-    freeque: QUEUE,
+    // Sort from small to large free spaces.
+    freeque: ?*Node,
 };
 
 // * Compensation for aligning "&areaque" position to 2 bytes border
 fn AlignIMACB(imacb: IMACB) *IMACB {
-    return (@as(*IMACB, (@as(u32, imacb) & ~0x00000001)));
+    return (@as(*IMACB, @ptrFromInt(@intFromPtr(imacb) & ~0x00000001)));
 }
 
 // * Minimum unit of subdivision
 // *	The lower 1 bit of address is always 0
 // *	because memory is allocated by ROUNDSZ.
 // *	AreaQue uses the lower 1 bit for flag.
-const ROUNDSZ = @sizeOf(QUEUE); // 8 bytes */
+// const ROUNDSZ = @sizeOf(QUEUE); // 8 bytes */
+const ROUNDSZ: SZ = @sizeOf(u8); // 8 bytesらしいので適当においてる
 
-inline fn ROUND(sz: usize) u32 {
-    return ((@as(u32, sz) + @as(u32, ROUNDSZ - 1)) & ~@as(u32, ROUNDSZ - 1));
+inline fn ROUND(sz: SZ) SZ {
+    return (sz + ROUNDSZ - 1) & ~(ROUNDSZ - 1);
 }
 
 // Minimum fragment size */
-const MIN_FRAGMENT = ROUNDSZ * 2;
+const MIN_FRAGMENT: SZ = ROUNDSZ * 2;
 
 // * Maximum allocatable size (to check for parameter)
 // INT_MAX == @max(isize)?
-const MAX_ALLOCATE = knlink.INT_MAX & ~(ROUNDSZ - 1);
+const MAX_ALLOCATE: SZ = knlink.INT_MAX & ~(ROUNDSZ - 1);
 
 // * Adjusting the size which can be allocated
-inline fn roundSize(sz: i32) i32 {
-    if (sz < @as(i32, MIN_FRAGMENT)) {
-        sz = @as(i32, MIN_FRAGMENT);
+inline fn roundSize(sz: SZ) SZ {
+    if (sz < MIN_FRAGMENT) {
+        sz = MIN_FRAGMENT;
     }
-    return @as(isize, (@as(u32, sz) + @as(u32, ROUNDSZ - 1)) & ~@as(u32, ROUNDSZ - 1));
+    return (sz + ROUNDSZ - 1) & ~(ROUNDSZ - 1);
 }
 
 // * Flag that uses the lower bits of AreaQue's 'prev'.
@@ -75,10 +81,10 @@ inline fn Assign(x: u8, y: u8) void {
 // * Area size
 
 //size返すっぽいしu8あればええやろ
-inline fn AreaSize(aq: QUEUE) u8 {
+inline fn AreaSize(aq: QUEUE) SZ {
     return (@as(*i8, aq.next - @as(*i8, aq + 1)));
 }
-inline fn FreeSize(fq: QUEUE) u8 {
+inline fn FreeSize(fq: QUEUE) SZ {
     return (@as(i32, (fq + 1).prev));
 }
 

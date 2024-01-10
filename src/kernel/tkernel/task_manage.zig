@@ -8,7 +8,7 @@ const TSTAT = task.TSTAT;
 const wait = knlink.wait;
 const cpu_task = knlink.sysdepend.core.cpu_task;
 const cpu_status = knlink.sysdepend.core.cpu_status;
-const cpu_ctrl = knlink.sysdepend.core.cpu_ctrl;
+const cpu_ctrl = knlink.sysdepend.core.cpu_cntl;
 const TCB = knlink.TCB;
 const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
@@ -198,17 +198,17 @@ fn knl_ter_tsk(tcb: *TCB) void {
     var state: TSTAT = @as(TSTAT, tcb.state);
     if (state == TSTAT.READY) {
         task.knl_make_non_ready(tcb);
-    } else if ((state & TSTAT.WAIT) != 0) {
-        wait.knl_wait_cancel(tcb);
-        if (tcb.wspec.rel_wai_hook != null) {
-            (*tcb.wspec.rel_wai_hook)(tcb);
-        }
+    } else if ((@intFromEnum(state) & @intFromEnum(TSTAT.WAIT)) != 0) {
+        // wait.knl_wait_cancel(tcb);
+        // if (tcb.wspec.rel_wai_hook != null) {
+        //     (*tcb.wspec.rel_wai_hook)(tcb);
+        // }
     }
 
-    // if (comptime config.USE_MUTEX) {
-    //     // signal mutex */
-    //     mutex.knl_signal_all_mutex(tcb);
-    // }
+    if (comptime config.func.USE_MUTEX) {
+        //     // signal mutex */
+        //     mutex.knl_signal_all_mutex(tcb);
+    }
     cpu_task.knl_cleanup_context(tcb);
 }
 
@@ -225,31 +225,35 @@ pub fn tk_ext_tsk() void {
     // Check context error */
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
-            // SYSTEM_MESSAGE("tk_ext_tsk was called in the task independent\n");
+            tm_printf("tk_ext_tsk was called in the task independent", .{});
             while (true) {}
             unreachable;
         }
     }
     if (comptime config.CHK_CTX1) {
         if (cpu_status.in_ddsp()) {
-            // SYSTEM_MESSAGE("tk_ext_tsk was called in the dispatch disabled\n");
+            tm_printf("tk_ext_tsk was called in the dispatch disabled", .{});
         }
     }
 
     // enableしてないけどええんか？
     cpu_status.DISABLE_INTERRUPT();
-    knl_ter_tsk(knlink.knl_ctxtsk);
-    task.knl_make_dormant(knlink.knl_ctxtsk);
+    if (knlink.knl_ctxtsk) |current_task| {
+        knl_ter_tsk(current_task);
+        task.knl_make_dormant(current_task);
+    } else {
+        libtm.tm_eprintf("current task is null", .{});
+    }
 
     cpu_ctrl.knl_force_dispatch();
     // unreachableなはず。なら下のコードはなんのために?
 
-    if (comptime cpu_task.DORMANT_STACK_SIZE) {
-        // volatileついてた
-        var _dummy: [cpu_task.DORMANT_STACK_SIZE]i8 = undefined;
-        // Avoid WARNING (This code does not execute) */
-        _dummy[0] = _dummy[0];
-    }
+    // if (comptime cpu_task.DORMANT_STACK_SIZE) {
+    //     // volatileついてた
+    //     var _dummy: [cpu_task.DORMANT_STACK_SIZE]i8 = undefined;
+    //     // Avoid WARNING (This code does not execute) */
+    //     _dummy[0] = _dummy[0];
+    // }
 }
 // }
 

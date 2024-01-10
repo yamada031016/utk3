@@ -23,6 +23,8 @@ extern const __data_start: usize;
 extern const __data_end: usize;
 extern const __bss_start: usize;
 extern const __bss_end: usize;
+extern const __rom_end: usize;
+extern const __end: usize;
 
 // if (comptime  USE_NOINIT) {
 // pub extern const __noinit_end: *void;
@@ -30,13 +32,14 @@ extern const __bss_end: usize;
 
 extern const vector_tbl: VectorTable;
 // extern const __vector_org: usize;
-
 export fn Reset_Handler() callconv(.C) noreturn {
     // Startup Hardware
     hw_setting.knl_startup_hw();
-    if (dbg) {
+    if (comptime dbg) {
         knlink.sysdepend.devinit.knl_start_device();
     }
+    const a = @import("libtk").syslib.cpu.read(@intFromEnum(sysdef.TIM16.CNT));
+    libtm.intPrint("timer at reset handler: ", a);
 
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
@@ -62,33 +65,13 @@ export fn Reset_Handler() callconv(.C) noreturn {
     var data_top = @as(*volatile usize, @ptrCast(&__data_start));
     var data_end: *volatile usize = @as(*volatile usize, @ptrCast(&__data_end));
 
-    // hexdump("&__start", @intFromPtr(&__start));
-    hexdump("&__data_org", @intFromPtr(&__data_org));
-    // hexdump("data_src", @intFromPtr(data_src));
-    // hexdump("&__data_start", @intFromPtr(&__data_start));
-    // hexdump("&__data_end", @intFromPtr(&__data_end));
-    // hexdump("&__bss_start", @intFromPtr(&__bss_start));
-    // hexdump("&__bss_end", @intFromPtr(&__bss_end));
-
-    // hexdump("data_src", data_src.*);
-    // hexdump("before data_end", data_end.*);
-    // hexdump("before data_top addr", @intFromPtr(data_top));
-    // hexdump("before data_end addr", @intFromPtr(data_end));
     while (data_top != data_end) {
         // *top++ = *src++;
         data_top.* = data_src.*;
         data_top = @ptrFromInt(@intFromPtr(data_top) + @sizeOf(usize));
         data_src = @ptrFromInt(@intFromPtr(data_src) + @sizeOf(usize));
-        // hexdump("data_top", @intFromPtr(data_top));
-        // hexdump("data_src", @intFromPtr(data_src));
-    } else {
-        // hexdump("after data_src", data_src.*);
-        // hexdump("after data_top", data_top.*);
-        // hexdump("after data_end", data_end.*);
-        // hexdump("after data_top addr", @intFromPtr(data_top));
-        // hexdump("after data_end addr", @intFromPtr(data_end));
     }
-    tm_printf("\x1b[32m<>Reset_Handler!!!\x1b[0m", .{});
+    tm_printf("\x1b[32m[START] Reset_Handler!!!\x1b[0m", .{});
 
     // Initialize .bss
     // if (comptime config.USE_NOINIT) {

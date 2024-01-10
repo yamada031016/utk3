@@ -118,20 +118,12 @@ pub fn RdyQueue() type {
                 this.klocktsk = tcb;
             }
 
-            // Debug:   29096
-            // safe:    52464
-            // Fast:    51604
-            // Small:   8528
             tm_printf("rdyque before pri", .{});
             if (priority < this.top_priority + 1) {
-                // serial.print("trueやでぇ！");
                 this.top_priority = priority;
                 return true;
             }
             return false;
-            // const node = This{ .data = value, .next = null };
-            // if (this.end) |end| end.*.next = &node else this.start = &node;
-            // this.end = &node;
         }
         // * Insert task at head in ready queue
         pub fn insert_top(this: *This, tcb: *TCB) void {
@@ -180,7 +172,7 @@ pub fn RdyQueue() type {
             }
 
             // queue.QueRemove(&tcb.tskque);
-            tcb.tskque.dequeue();
+            // tcb.tskque.dequeue();
             if (tcb.klockwait) {
                 // Delete from kernel lock wait queue */
                 tcb.klockwait = false;
@@ -211,6 +203,7 @@ pub fn RdyQueue() type {
             //     }
             // }
         }
+
         // if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
         fn calc_top_priority(bitmap: usize, pos: isize) isize {
             for (pos..knldef.NUM_TSKPRI - 1) |_| {
