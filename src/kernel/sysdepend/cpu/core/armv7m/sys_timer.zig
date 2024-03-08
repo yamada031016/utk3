@@ -24,7 +24,7 @@ pub inline fn knl_start_hw_timer() void {
     write(sysdef.core.SYST_CSR, 0x00000006);
 
     // Set counter: TMCLK(MHz) */
-    var n = @as(usize, @intCast(knldef.TIMER_PERIOD * sysdef.TMCLK_KHz - 1));
+    const n = @as(usize, @intCast(knldef.TIMER_PERIOD * sysdef.TMCLK_KHz - 1));
     write(sysdef.core.SYST_RVR, n);
 
     // Start timer count
@@ -69,7 +69,7 @@ pub inline fn knl_get_hw_timer_nsec() u32 {
 
     syslib.core.DI(&imask);
     defer syslib.core.EI(imask);
-    var max: u32 = read(sysdef.core.SYST_RVR); // Setting count */
+    const max: u32 = read(sysdef.core.SYST_RVR); // Setting count */
     var unf: u32 = read(sysdef.core.SYST_CSR) & 0x10000; // COUNTFLAG */
     var ofs: u32 = read(sysdef.core.SYST_CVR) & 0x00ffffff; // Current Remained count */
     if (unf == 0) { // Reload not occurred */

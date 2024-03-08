@@ -2,7 +2,7 @@ const config = @import("config");
 const serial = @import("devices").serial;
 const TkError = @import("libtk").errno.TkError;
 
-pub fn knl_init_device() TkError!void {
+pub fn knl_init_device() !void {
     return;
 }
 

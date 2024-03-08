@@ -5,17 +5,18 @@ const write = syslib.cpu.write;
 const read = syslib.cpu.read;
 const TkError = libtk.errno.TkError;
 
-const builtin = @import("builtin");
-const dbg = builtin.mode == .Debug;
-
 pub fn put(data: u8) void {
     // wait TXE
-    while ((read(config.USART2_ISR) & 1 << 7) == 0) {} else {
+    while ((read(config.USART2_ISR) & 1 << 7) == 0) {
+        asm volatile ("nop");
+    } else {
         // transmit buffer is empty
         write(config.USART2_TDR, data);
     }
     // wait TC
-    while ((read(config.USART2_ISR) & 1 << 6) == 0) {}
+    while ((read(config.USART2_ISR) & 1 << 6) == 0) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn puts(string: []const u8) void {
@@ -27,14 +28,6 @@ pub fn puts(string: []const u8) void {
 pub fn print(string: []const u8) void {
     puts(string);
     puts("\r\n");
-}
-
-// std.fmt.format参考にする.
-// 未実装
-pub fn tm_printf(comptime fmt: []const u8, args: anytype) void {
-    _ = args;
-    _ = fmt;
-    unreachable;
 }
 
 pub fn hexdump(name: []const u8, data: usize) void {
@@ -130,11 +123,4 @@ pub fn eprint(string: []const u8) void {
     defer puts("\x1b[0m");
     puts("[ERROR]\t");
     print(string);
-}
-
-// デバッグビルド時のみ機能するやつ
-fn debug_print_example(data: []const u8) void {
-    if (comptime dbg) {
-        print(data);
-    }
 }

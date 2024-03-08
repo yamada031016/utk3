@@ -29,10 +29,10 @@ pub const TCB = struct {
     const This = @This();
     pub const Node = struct {
         // data: *TCB,
-        next: ?*This,
-        prev: ?*This,
+        next: *This,
+        prev: *This,
     };
-    tskque: ?*Node,
+    tskque: *Node,
     tskid: usize, // Task isize */
     exinf: ?*anyopaque, // Extended information */
     tskatr: u32, // Task attribute */
@@ -69,8 +69,8 @@ pub const TCB = struct {
     //     name: [OBJECT_NAME_LENGTH]const u8; // name */
     // }
 };
-pub export var knl_ctxtsk: ?*TCB = null;
-pub export var knl_schedtsk: ?*TCB = null;
+pub export var knl_ctxtsk: ?*TCB = undefined;
+pub export var knl_schedtsk: ?*TCB = undefined;
 
 // pub const DDS_ENABLE = 0;
 pub const DDS_ENABLE = false;

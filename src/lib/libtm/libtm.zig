@@ -42,7 +42,7 @@ pub fn tm_printf(comptime string: []const u8, args: anytype) void {
             usize,
             comptime_int,
             => {
-                var hoge = fmtDec(@intCast(args[0]));
+                const hoge = fmtDec(@intCast(args[0]));
                 tm_putstring(string);
                 tm_putchar('\t');
                 tm_putstring(hoge);
@@ -118,144 +118,153 @@ pub fn tm_printf(comptime string: []const u8, args: anytype) void {
 //     // }
 // }
 pub fn intPrint(string: []const u8, decimal: usize) void {
-    serial.puts(string);
-    serial.puts("\t\t");
-    var vdata = decimal;
-    var buf: [10]usize = [_]usize{100} ** 10;
-    for (0..9) |i| {
-        buf[9 - i] = vdata % 10;
-        vdata /= 10;
-        if (vdata == 0)
-            break;
-    }
-    for (buf) |value| {
-        if (value > 10) {
-            // serial.print(">10");
-            continue;
+    if (comptime dbg) {
+        serial.puts(string);
+        serial.puts("\t\t");
+        var vdata = decimal;
+        var buf: [10]usize = [_]usize{100} ** 10;
+        for (0..9) |i| {
+            buf[9 - i] = vdata % 10;
+            vdata /= 10;
+            if (vdata == 0)
+                break;
         }
-        switch (value) {
-            0 => serial.put('0'),
-            1 => serial.put('1'),
-            2 => serial.put('2'),
-            3 => serial.put('3'),
-            4 => serial.put('4'),
-            5 => serial.put('5'),
-            6 => serial.put('6'),
-            7 => serial.put('7'),
-            8 => serial.put('8'),
-            9 => serial.put('9'),
-            else => serial.puts("elseや"),
+        for (buf) |value| {
+            if (value > 10) {
+                // serial.print(">10");
+                continue;
+            }
+            switch (value) {
+                0 => serial.put('0'),
+                1 => serial.put('1'),
+                2 => serial.put('2'),
+                3 => serial.put('3'),
+                4 => serial.put('4'),
+                5 => serial.put('5'),
+                6 => serial.put('6'),
+                7 => serial.put('7'),
+                8 => serial.put('8'),
+                9 => serial.put('9'),
+                else => serial.puts("elseや"),
+            }
         }
+        serial.puts("\r\n");
     }
-    serial.puts("\r\n");
 }
 pub fn hexPrint(string: []const u8, decimal: usize) void {
-    serial.puts(string);
-    serial.puts("\t\t");
-    var vdata = decimal;
-    var buf: [10]usize = undefined;
-    for (0..9) |i| {
-        buf[9 - i] = vdata % 16;
-        vdata /= 16;
-        if (vdata == 0)
-            break;
-    }
-    for (buf) |value| {
-        if (value > 15) {
-            // serial.print(">10");
-            continue;
+    if (comptime dbg) {
+        serial.puts(string);
+        serial.puts("\t\t0x");
+        var vdata = decimal;
+        var buf: [10]usize = undefined;
+        for (0..9) |i| {
+            buf[9 - i] = vdata % 16;
+            vdata /= 16;
+            if (vdata == 0)
+                break;
         }
-        switch (value) {
-            0 => serial.put('0'),
-            1 => serial.put('1'),
-            2 => serial.put('2'),
-            3 => serial.put('3'),
-            4 => serial.put('4'),
-            5 => serial.put('5'),
-            6 => serial.put('6'),
-            7 => serial.put('7'),
-            8 => serial.put('8'),
-            9 => serial.put('9'),
-            10 => serial.put('A'),
-            11 => serial.put('B'),
-            12 => serial.put('C'),
-            13 => serial.put('D'),
-            14 => serial.put('E'),
-            15 => serial.put('F'),
-            else => unreachable,
+        for (buf) |value| {
+            if (value > 15) {
+                // serial.print(">10");
+                continue;
+            }
+            switch (value) {
+                0 => serial.put('0'),
+                1 => serial.put('1'),
+                2 => serial.put('2'),
+                3 => serial.put('3'),
+                4 => serial.put('4'),
+                5 => serial.put('5'),
+                6 => serial.put('6'),
+                7 => serial.put('7'),
+                8 => serial.put('8'),
+                9 => serial.put('9'),
+                10 => serial.put('A'),
+                11 => serial.put('B'),
+                12 => serial.put('C'),
+                13 => serial.put('D'),
+                14 => serial.put('E'),
+                15 => serial.put('F'),
+                else => unreachable,
+            }
         }
+        tm_putstring("\r\n");
     }
-    tm_putstring("\r\n");
 }
 
 fn fmtDec(decimal: usize) []u8 {
-    var vdata = decimal;
-    var buf: [10]usize = undefined;
-    var str: [10]u8 = undefined;
-    for (0..9) |i| {
-        buf[9 - i] = vdata % 10;
-        vdata /= 10;
-        if (vdata == 0)
-            break;
-    }
-    // std.debug.print("a: {any}", .{a});
-    for (buf, 0..) |value, i| {
-        // std.debug.print("value: {}", .{value});
-        if (value > 10) {
-            continue;
+    if (comptime dbg) {
+        var vdata = decimal;
+        var buf: [10]usize = undefined;
+        var str: [10]u8 = undefined;
+        for (0..9) |i| {
+            buf[9 - i] = vdata % 10;
+            vdata /= 10;
+            if (vdata == 0)
+                break;
         }
-        switch (value) {
-            0 => str[i] = '0',
-            1 => str[i] = '1',
-            2 => str[i] = '2',
-            3 => str[i] = '3',
-            4 => str[i] = '4',
-            5 => str[i] = '5',
-            6 => str[i] = '6',
-            7 => str[i] = '7',
-            8 => str[i] = '8',
-            9 => str[i] = '9',
-            else => unreachable,
+        // std.debug.print("a: {any}", .{a});
+        for (buf, 0..) |value, i| {
+            // std.debug.print("value: {}", .{value});
+            if (value > 10) {
+                continue;
+            }
+            switch (value) {
+                0 => str[i] = '0',
+                1 => str[i] = '1',
+                2 => str[i] = '2',
+                3 => str[i] = '3',
+                4 => str[i] = '4',
+                5 => str[i] = '5',
+                6 => str[i] = '6',
+                7 => str[i] = '7',
+                8 => str[i] = '8',
+                9 => str[i] = '9',
+                else => unreachable,
+            }
         }
+
+        return str[0..9];
     }
-    return str[0..9];
 }
 
 fn fmtHex(number: usize) []u8 {
-    var vdata = number;
-    var buf: [10]usize = undefined;
-    var str: [10]usize = undefined;
+    if (comptime dbg) {
+        var vdata = number;
+        var buf: [10]usize = undefined;
+        var str: [10]usize = undefined;
 
-    for (0..9) |i| {
-        buf[9 - i] = vdata % 16;
-        vdata /= 16;
-        if (vdata == 0) break;
-    }
-    for (buf, 0..) |value, i| {
-        if (value > 16) {
-            continue;
+        for (0..9) |i| {
+            buf[9 - i] = vdata % 16;
+            vdata /= 16;
+            if (vdata == 0) break;
         }
-        switch (value) {
-            0 => str[i] = '0',
-            1 => str[i] = '1',
-            2 => str[i] = '2',
-            3 => str[i] = '3',
-            4 => str[i] = '4',
-            5 => str[i] = '5',
-            6 => str[i] = '6',
-            7 => str[i] = '7',
-            8 => str[i] = '8',
-            9 => str[i] = '9',
-            10 => str[i] = 'A',
-            11 => str[i] = 'B',
-            12 => str[i] = 'C',
-            13 => str[i] = 'D',
-            14 => str[i] = 'E',
-            15 => str[i] = 'F',
-            else => unreachable,
+        for (buf, 0..) |value, i| {
+            if (value > 16) {
+                continue;
+            }
+            switch (value) {
+                0 => str[i] = '0',
+                1 => str[i] = '1',
+                2 => str[i] = '2',
+                3 => str[i] = '3',
+                4 => str[i] = '4',
+                5 => str[i] = '5',
+                6 => str[i] = '6',
+                7 => str[i] = '7',
+                8 => str[i] = '8',
+                9 => str[i] = '9',
+                10 => str[i] = 'A',
+                11 => str[i] = 'B',
+                12 => str[i] = 'C',
+                13 => str[i] = 'D',
+                14 => str[i] = 'E',
+                15 => str[i] = 'F',
+                else => unreachable,
+            }
         }
+        return str;
     }
-    return str;
 }
 
 // args must be {} or {err}

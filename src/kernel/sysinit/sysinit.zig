@@ -19,7 +19,7 @@ const interrupt = knlink.sysdepend.interrupt;
 // Start micro T-Kernel
 //    Initialize sequence before micro T-Kernel start.
 //    Perform preparation necessary to start micro T-Kernel.
-pub fn main() !void {
+pub fn main() !noreturn {
     print("\x1b[32m<>SYSINIT main function.\x1b[0m");
     errdefer |err| {
         serial.eprint(@errorName(err));
@@ -75,21 +75,21 @@ pub fn main() !void {
     // Create & start initial task
     if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
         if (tskmng.tk_sta_tsk(tskid, 0)) {
-            cpu_cntl.knl_force_dispatch();
             // Start Initial Task.
+            cpu_cntl.knl_force_dispatch();
             unreachable;
         } else |err| {
-            serial.eprint("Initial Task can not start");
+            serial.eprint("Initial Task cannot start");
             return err;
         }
     } else |err| {
-        serial.eprint("Initial Task can not creat");
+        serial.eprint("Initial Task cannot creat");
         return err;
     }
 
-    // After this, Error handling
     unreachable;
 }
+
 // Exit micro T-Kernel from Initial Task.
 pub fn knl_tkernel_exit() TkError!noreturn {
     if (comptime config.USE_SHUTDOWN) {

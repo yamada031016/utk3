@@ -19,15 +19,17 @@ pub inline fn _BIT_SHIFT(n: u8) i32 {
 // if (comptime USE_FUNC_TSTDLIB_BITCLR) {
 // tstdlib_bitclr : clear specified bit
 pub fn knl_bitclr(base: *void, offset: i32) void {
-    if (offset < 0)
-        return;
-
-    var cp = @as(*u8, base);
-    cp += offset / 8;
-
-    var mask = _BIT_SET_N(offset);
-
-    cp.* &= ~mask;
+    _ = offset;
+    _ = base;
+    // if (offset < 0)
+    //     return;
+    //
+    // var cp = @as(*u8, base);
+    // cp += offset / 8;
+    //
+    // var mask = _BIT_SET_N(offset);
+    //
+    // cp.* &= ~mask;
 }
 // }
 

@@ -56,11 +56,13 @@ const objname = union {
 };
 
 pub fn SetOBJNAME(exinf: *void, name: []const u8) void {
-    var d: *u8 = @as(*u8, @ptrCast(&exinf));
-    var s: *u8 = @as(*u8, @ptrCast(name));
-    for (0..3) |_| {
-        d.* += 1;
-        s.* += 1;
-        d.* = s.*;
-    }
+    _ = name;
+    _ = exinf;
+    // var d: *u8 = @as(*u8, @ptrCast(&exinf));
+    // const s: *u8 = @as(*u8, @ptrCast(name));
+    // for (0..3) |_| {
+    //     d.* += 1;
+    //     s.* += 1;
+    //     d.* = s.*;
+    // }
 }

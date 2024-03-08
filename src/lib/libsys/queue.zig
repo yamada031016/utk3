@@ -58,7 +58,7 @@ pub fn TkQueue(comptime T: type) type {
         pub fn dequeueNext(this: *This) ?T {
             print("dequeueNext");
             // const start: ?*Node = if (this.start) |_start| _start else null;
-            var start = this.start.?.next orelse return null;
+            const start = this.start.?.next orelse return null;
             this.start = start;
             // if (start) |new_start| {
             // _ = new_start;

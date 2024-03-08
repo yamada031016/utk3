@@ -2,3 +2,4 @@
 /zig-cache/*
 .git/*
 utk3.bin
+log.md

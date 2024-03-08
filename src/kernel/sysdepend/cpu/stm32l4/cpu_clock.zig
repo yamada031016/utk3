@@ -89,7 +89,7 @@ pub fn startup_clock(clkatr: u32) void {
     // }
 
     // Set Flash Memory Access latency  */
-    var f_ratency: u32 = 0x400 >> 8; // 1024
+    const f_ratency: u32 = 0x400 >> 8; // 1024
     const FLASH_ACR_LATENCY_MASK = 0x7;
     @as(*volatile u32, @ptrFromInt(sysdef.cpu.FLASH_ACR)).* = (@as(*volatile u32, @ptrFromInt(sysdef.cpu.FLASH_ACR)).* & ~@as(usize, FLASH_ACR_LATENCY_MASK)) | FLASH_ACR_LATENCY(f_ratency);
     while ((@as(*volatile u32, @ptrFromInt(sysdef.cpu.FLASH_ACR)).* & FLASH_ACR_LATENCY_MASK) != FLASH_ACR_LATENCY(f_ratency)) {

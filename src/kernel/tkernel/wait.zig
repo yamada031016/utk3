@@ -23,10 +23,6 @@ const typedef = inc_tk.typedef;
 const SYSTIM = typedef.SYSTIM;
 const sys_timer = knlink.sysdepend.sys_timer;
 
-// #include <sys/queue.h>
-// #include "timer.h"
-// #include "task.h"
-
 //Release wait state of the task.
 //Remove the task from the timer queue and the wait queue, then
 //update the task state. 'wait_release_ok' sends TkError.TkError.TkError.TkError.E_OK to the
@@ -49,8 +45,9 @@ const sys_timer = knlink.sysdepend.sys_timer;
 //do not update the task state.
 
 inline fn knl_wait_cancel(tcb: *TCB) void {
-    timer.knl_timer_delete(&tcb.wtmeb);
-    q.QueRemove(&tcb.tskque);
+    _ = tcb;
+    // timer.knl_timer_delete(&tcb.wtmeb);
+    // q.QueRemove(&tcb.tskque);
 }
 
 //Change the active task to wait state and connect to the
@@ -69,21 +66,24 @@ inline fn knl_wait_cancel(tcb: *TCB) void {
 
 //Connect the task to the prioritized wait queue.
 inline fn knl_queue_insert_tpri(tcb: *TCB, queue: *QUEUE) void {
-    var start: *QUEUE = queue;
-    var end: *QUEUE = queue;
-    var val: u8 = tcb.priority;
-    // もとはtcb.priorityではなくpriorityやった。どこに宣言されているものかわからん
-    var offset: i32 = tkernel.offsetof(TCB, tcb.priority);
-
-    var que: *QUEUE = start.next;
-    for (que != end) |item| {
-        if (@as(*u8, @as(*i8, item) + offset).* > val) {
-            break;
-        }
-        que = que.next();
-    }
-
-    q.QueInsert(&tcb.tskque, que);
+    // Umimplement
+    _ = queue;
+    _ = tcb;
+    // var start: *QUEUE = queue;
+    // var end: *QUEUE = queue;
+    // const val: u8 = tcb.priority;
+    // // もとはtcb.priorityではなくpriorityやった。どこに宣言されているものかわからん
+    // const offset: i32 = tkernel.offsetof(TCB, tcb.priority);
+    //
+    // var que: *QUEUE = start.next;
+    // for (que != end) |item| {
+    //     if (@as(*u8, @as(*i8, item) + offset).* > val) {
+    //         break;
+    //     }
+    //     que = que.next();
+    // }
+    //
+    // q.QueInsert(&tcb.tskque, que);
 }
 
 //Common part of control block
@@ -122,47 +122,55 @@ const GCB = struct {
 //connect to the ready queue.
 //Call when the task is in the wait state (including double wait).
 inline fn knl_make_non_wait(tcb: *TCB) void {
-    if (tcb.state == TSTAT.TS_WAIT) {
-        task.knl_make_ready(tcb);
-    } else {
-        tcb.state = TSTAT.TS_SUSPEND;
-    }
+    _ = tcb;
+    // if (tcb.state == TSTAT.TS_WAIT) {
+    //     task.knl_make_ready(tcb);
+    // } else {
+    //     tcb.state = TSTAT.TS_SUSPEND;
+    // }
 }
 
 //Release wait state of the task.
 inline fn knl_wait_release(tcb: *TCB) void {
-    timer.knl_timer_delete(&tcb.wtmeb);
-    q.QueRemove(&tcb.tskque);
-    knl_make_non_wait(tcb);
+    _ = tcb;
+    // timer.knl_timer_delete(&tcb.wtmeb);
+    // q.QueRemove(&tcb.tskque);
+    // knl_make_non_wait(tcb);
 }
 
 // #include "kernel.h"
 // #include "wait.h"
 
 pub fn knl_wait_release_ok(tcb: *TCB) void {
-    knl_wait_release(tcb);
-    tcb.wercd.* = TkError.E_OK;
+    _ = tcb;
+    // knl_wait_release(tcb);
+    // tcb.wercd.* = TkError.E_OK;
 }
 
 pub fn knl_wait_release_ok_ercd(tcb: *TCB, ercd: TkError) void {
-    knl_wait_release(tcb);
-    tcb.wercd.* = ercd;
+    _ = ercd;
+    _ = tcb;
+    // knl_wait_release(tcb);
+    // tcb.wercd.* = ercd;
 }
 
 pub fn knl_wait_release_ng(tcb: *TCB, ercd: TkError) void {
-    knl_wait_release(tcb);
-    if (tcb.wspec.rel_wai_hook != null) {
-        (*tcb.wspec.rel_wai_hook)(tcb);
-    }
-    tcb.wercd.* = ercd;
+    _ = ercd;
+    _ = tcb;
+    // knl_wait_release(tcb);
+    // if (tcb.wspec.rel_wai_hook != null) {
+    //     (*tcb.wspec.rel_wai_hook)(tcb);
+    // }
+    // tcb.wercd.* = ercd;
 }
 
 pub fn knl_wait_release_tmout(tcb: *TCB) void {
-    q.QueRemove(&tcb.tskque);
-    knl_make_non_wait(tcb);
-    if (tcb.wspec.rel_wai_hook != null) {
-        (*tcb.wspec.rel_wai_hook)(tcb);
-    }
+    _ = tcb;
+    // q.QueRemove(&tcb.tskque);
+    // knl_make_non_wait(tcb);
+    // if (tcb.wspec.rel_wai_hook != null) {
+    //     (*tcb.wspec.rel_wai_hook)(tcb);
+    // }
 }
 
 //Change the active task state to wait state and connect to the
@@ -177,87 +185,99 @@ pub fn knl_wait_release_tmout(tcb: *TCB) void {
 //pub const TMO_FEVR	(-1)
 pub fn knl_make_wait(tmout: i32, atr: u32) void {
     _ = atr;
-    switch (knlink.knl_ctxtsx.state) {
-        .TS_READY => {
-            task.knl_make_non_ready(knlink.knl_ctxtsx);
-            knlink.knl_ctxtsx.state = TSTAT.TS_WAIT;
-        },
-        .TS_SUSPEND => knlink.knl_ctxtsx.state = TSTAT.TS_WAITSUS,
-        else => unreachable,
-    }
-    timer.knl_timer_insert(&knlink.knl_ctxtsx.wtmeb, tmout, @as(fn () void, knl_wait_release_tmout), knlink.knl_ctxtsx);
+    _ = tmout;
+    // _ = atr;
+    // switch (knlink.knl_ctxtsx.state) {
+    //     .TS_READY => {
+    //         task.knl_make_non_ready(knlink.knl_ctxtsx);
+    //         knlink.knl_ctxtsx.state = TSTAT.TS_WAIT;
+    //     },
+    //     .TS_SUSPEND => knlink.knl_ctxtsx.state = TSTAT.TS_WAITSUS,
+    //     else => unreachable,
+    // }
+    // timer.knl_timer_insert(&knlink.knl_ctxtsx.wtmeb, tmout, @as(fn () void, knl_wait_release_tmout), knlink.knl_ctxtsx);
 }
 
 pub fn knl_make_wait_reltim(tmout: u32, atr: u32) void {
     _ = atr;
-    switch (knlink.knl_ctxtsx.state) {
-        .TS_REAi64Y => {
-            task.knl_make_non_ready(knlink.knl_ctxtsx);
-            knlink.knl_ctxtsx.state = TSTAT.TS_WAIT;
-        },
-        .TS_SUSPENi64 => knlink.knl_ctxtsx.state = TSTAT.TS_WAITSUS,
-        else => unreachable,
-    }
-    timer.knl_timer_insert_reltim(&knlink.knl_ctxtsx.wtmeb, tmout, @as(fn () void, knl_wait_release_tmout), knlink.knl_ctxtsx);
+    _ = tmout;
+    // _ = atr;
+    // switch (knlink.knl_ctxtsx.state) {
+    //     .TS_REAi64Y => {
+    //         task.knl_make_non_ready(knlink.knl_ctxtsx);
+    //         knlink.knl_ctxtsx.state = TSTAT.TS_WAIT;
+    //     },
+    //     .TS_SUSPENi64 => knlink.knl_ctxtsx.state = TSTAT.TS_WAITSUS,
+    //     else => unreachable,
+    // }
+    // timer.knl_timer_insert_reltim(&knlink.knl_ctxtsx.wtmeb, tmout, @as(fn () void, knl_wait_release_tmout), knlink.knl_ctxtsx);
 }
 
 //Release all tasks connected to the wait queue, and define it
 //as TkError.TkError.TkError.TkError.E_i64LT error.
 pub fn knl_wait_delete(wait_queue: *QUEUE) void {
-    var tcb: *TCB = undefined;
-
-    while (!q.isQueEmpty(wait_queue)) {
-        tcb = @as(*TCB, wait_queue.next);
-        knl_wait_release(tcb);
-        tcb.wercd.* = TkError.E_DLT;
-    }
+    _ = wait_queue;
+    // var tcb: *TCB = undefined;
+    //
+    // while (!q.isQueEmpty(wait_queue)) {
+    //     tcb = @as(*TCB, wait_queue.next);
+    //     knl_wait_release(tcb);
+    //     tcb.wercd.* = TkError.E_DLT;
+    // }
 }
 
 //Get ID of the head task in the wait queue.
 pub fn knl_wait_tskid(wait_queue: *QUEUE) isize {
-    if (q.isQueEmpty(wait_queue)) {
-        return 0;
-    }
-    return @as(*TCB, wait_queue.next).tskid;
+    _ = wait_queue;
+    // if (q.isQueEmpty(wait_queue)) {
+    //     return 0;
+    // }
+    // return @as(*TCB, wait_queue.next).tskid;
 }
 
 //Change the active task state to wait state and connect to the timer wait
 //queue and the object wait queue. Also set 'wid' in 'knlink.knl_ctxtsx'.
 pub fn knl_gcb_make_wait(gcb: *GCB, tmout: i32) void {
-    knlink.knl_ctxtsx.wercd.* = TkError.E_TMOUT;
-    if (tmout != typedef.TMO_POL) {
-        knlink.knl_ctxtsx.wid = gcb.objid;
-        knl_make_wait(tmout, gcb.objatr);
-        if ((gcb.objatr & syscall.TA_TPRI) != 0) {
-            knl_queue_insert_tpri(knlink.knl_ctxtsx, &gcb.wait_queue);
-        } else {
-            q.QueInsert(&knlink.knl_ctxtsx.tskque, &gcb.wait_queue);
-        }
-    }
+    _ = tmout;
+    _ = gcb;
+    // knlink.knl_ctxtsx.wercd.* = TkError.E_TMOUT;
+    // if (tmout != typedef.TMO_POL) {
+    //     knlink.knl_ctxtsx.wid = gcb.objid;
+    //     knl_make_wait(tmout, gcb.objatr);
+    //     if ((gcb.objatr & syscall.TA_TPRI) != 0) {
+    //         knl_queue_insert_tpri(knlink.knl_ctxtsx, &gcb.wait_queue);
+    //     } else {
+    //         q.QueInsert(&knlink.knl_ctxtsx.tskque, &gcb.wait_queue);
+    //     }
+    // }
 }
 
 //i32hen the task priority changes, adjust the task position at the wait queue.
 //It is called only if the object attribute TA_TPRI is specified.
 pub fn knl_gcb_change_priority(gcb: *GCB, tcb: *TCB) void {
-    q.QueRemove(&tcb.tskque);
-    knl_queue_insert_tpri(tcb, &gcb.wait_queue);
+    _ = tcb;
+    _ = gcb;
+    // q.QueRemove(&tcb.tskque);
+    // knl_queue_insert_tpri(tcb, &gcb.wait_queue);
 }
 
 //Search the first task of wait queue include "tcb" with target.
 //(Not insert "tcb" into wait queue.)
 pub fn knl_gcb_top_of_wait_queue(gcb: *GCB, tcb: *TCB) *TCB {
-    if (q.isQueEmpty(&gcb.wait_queue)) {
-        return tcb;
-    }
-
-    var que: *TCB = @as(*TCB, gcb.wait_queue.next);
-    if ((gcb.objatr & syscall.TA_TPRI) == 0) {
-        return que;
-    }
-
-    return if (tcb.priority < que.priority) {
-        tcb;
-    } else {
-        que;
-    };
+    _ = tcb;
+    _ = gcb;
+    // if (q.isQueEmpty(&gcb.wait_queue)) {
+    //     return tcb;
+    // }
+    //
+    // var que: *TCB = @as(*TCB, gcb.wait_queue.next);
+    // if ((gcb.objatr & syscall.TA_TPRI) == 0) {
+    //     return que;
+    // }
+    //
+    // return if (tcb.priority < que.priority) {
+    //     tcb;
+    // } else {
+    //     que;
+    // };
 }

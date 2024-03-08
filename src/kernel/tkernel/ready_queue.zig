@@ -29,23 +29,10 @@ const tm_printf = libtm.tm_printf;
 const BITMAPSZ = @sizeOf(usize) * 8;
 const NUM_BITMAP = (knldef.NUM_TSKPRI + BITMAPSZ - 1) / BITMAPSZ;
 
-// pub const RDYQUE = struct {
-//     top_priority: PRI, // Highest priority in ready queue */
-//     tskque: [knldef.NUM_TSKPRI]queue.Queue, // Task queue per priority */
-//     null: *void, // When the ready queue is empty, */
-//     bitmap: [NUM_BITMAP]usize, // Bitmap area per priority */
-//     klocktsk: *TCB, // READY task with kernel lock */
-// };
-
 // nullはOptional型があるので消してよし
 pub fn RdyQueue() type {
-    return struct {
+    return extern struct {
         const This = @This();
-        // const Node = struct {
-        //     data: *TCB,
-        //     next: ?*Node,
-        //     prev: ?*Node,
-        // };
         start: ?*TCB.Node,
         end: ?*TCB.Node,
         top_priority: PRI, // Highest priority in ready queue */
@@ -54,10 +41,6 @@ pub fn RdyQueue() type {
         klocktsk: ?*TCB, // READY task with kernel lock */
 
         pub fn init() This {
-            // for (0..knlink.NUM_TSKPRI) |i| {
-            //     this.tskque[i].init();
-            // }
-            // tstd.knl_memset(This.bitmap, 0, @sizeOf(This.bitmap));
             return This{
                 .start = null,
                 .end = null,
@@ -70,16 +53,19 @@ pub fn RdyQueue() type {
 
         // * Return the highest priority task in ready queue
         pub fn top(this: *This) *TCB {
+            tm_printf("ready queue top() start", .{});
+            defer tm_printf("ready queue top() end", .{});
             // If there is a task at kernel lock, that is the highest priority task */
-            if (this.klocktsk) |elem| {
-                return elem;
-            }
-            // return @as(*TCB, this.tskque[this.top_priority].next.?.data);
-            return this.tskque[this.top_priority].next.?.data;
+            // if (this.klocktsk) |elem| {
+            //     tm_printf("klocktsk", .{});
+            //     return elem;
+            // }
+            libtm.intPrint("top pri", this.top_priority);
+            return this.tskque[this.top_priority - 1].?;
         }
 
         // * Return the priority of the highest priority task in the ready queue
-        pub fn top_priority(this: *This) isize {
+        pub fn getTopPriority(this: *This) PRI {
             return this.top_priority;
         }
 
@@ -93,41 +79,52 @@ pub fn RdyQueue() type {
             defer tm_printf("rdyque insert end", .{});
 
             const priority: usize = tcb.priority;
-            const target: ?*TCB = this.tskque[priority];
+            var target: ?*TCB = this.tskque[priority - 1];
 
             if (target) |elem| {
+                tm_printf("target exists", .{});
                 // elem: *TCB
-                elem.tskque.?.prev = tcb;
-                tcb.tskque.?.next = elem;
-                tcb.tskque.?.prev = elem.tskque.?.prev;
+                // if (elem.tskque) |que| {
+                //     tm_printf("tskque exists", .{});
+                elem.tskque.prev = tcb;
+                tcb.tskque.next = elem;
+                tcb.tskque.prev = tcb;
+                // } else {
+                //     tm_printf("tskque is null", .{});
+                // }
                 // var tsk = tcb.tskque.?.next;
                 // while (tsk != null) : (tsk = tsk.?.tskque.?.next) {}
                 // tsk = elem;
             } else {
-                this.tskque[priority] = tcb;
+                this.tskque[priority - 1] = tcb;
+                libtm.intPrint("usermain tskid", this.tskque[9].?.tskid);
+                tm_printf("tskque update", .{});
             }
 
             if (knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-                tm_printf("rdyque before bitmap", .{});
-                this.bitmap[0] |= @as(usize, 1) << @as(u5, @intCast(priority));
+                libtm.intPrint("bitmap before", this.bitmap[0]);
+                this.bitmap[0] |= @as(u32, 1) << @as(u5, @intCast(priority));
             } else {
                 tstd.knl_bitset(this.bitmap, priority);
             }
+            libtm.intPrint("bitmap after", this.bitmap[0]);
 
             if (tcb.klocked) {
                 this.klocktsk = tcb;
             }
 
-            tm_printf("rdyque before pri", .{});
-            if (priority < this.top_priority + 1) {
+            libtm.intPrint("top pri", this.top_priority);
+            if (priority < this.top_priority) {
                 this.top_priority = priority;
+                libtm.intPrint("top pri", this.top_priority);
                 return true;
+            } else {
+                return false;
             }
-            return false;
         }
         // * Insert task at head in ready queue
         pub fn insert_top(this: *This, tcb: *TCB) void {
-            var priority: PRI = tcb.priority;
+            const priority: PRI = tcb.priority;
 
             // queue.QueInsert(&tcb.tskque, rq.tskque[priority].next);
             if (this.tskque[priority].?.*.next) |elem| {
@@ -161,13 +158,16 @@ pub fn RdyQueue() type {
         // *	priority. In such case, use the bitmap area to search the second
         // *	highest priority task.
         pub fn delete(this: *This, tcb: *TCB) void {
-            var priority: PRI = tcb.priority;
+            tm_printf("ready queue delete() start", .{});
+            defer tm_printf("ready queue delete() end", .{});
+            const priority: PRI = tcb.priority;
             // if (comptime knldef.NUM_TSKPRI > INT_BITWIDTH) {
             //     var i: isize = undefined;
             //     _ = i;
             // }
 
             if (this.klocktsk == tcb) {
+                tm_printf("klocktsk in delete()", .{});
                 this.klocktsk = null;
             }
 
@@ -175,22 +175,31 @@ pub fn RdyQueue() type {
             // tcb.tskque.dequeue();
             if (tcb.klockwait) {
                 // Delete from kernel lock wait queue */
+                tm_printf("klockwait in delete()", .{});
                 tcb.klockwait = false;
                 return;
             }
-            if (this.tskque[priority] == null) {
+            if (this.tskque[priority - 1] == null) {
+                tm_printf("tskque in delete()", .{});
                 // tskque is empty
                 return;
+            } else {
+                this.tskque[priority - 1] = null;
             }
 
+            libtm.intPrint("bitmap before", this.bitmap[0]);
             if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-                this.bitmap[0] &= ~(1 << priority);
+                // this.bitmap[0] &= ~(1 << priority);
+                this.bitmap[0] ^= (@as(u32, 1) << @as(u5, @intCast(priority)));
             } else {
                 tstd.knl_bitclr(this.bitmap, priority);
             }
-            if (priority != this.top_priority) {
-                return;
-            }
+            // if (priority != this.top_priority) {
+            //     libtm.intPrint("top pri", this.top_priority);
+            //     libtm.intPrint(" pri", tcb.priority);
+            //     tm_printf("pri in delete()", .{});
+            //     return;
+            // }
 
             // if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
             this.top_priority = this.calc_top_priority(this.bitmap[0], priority);
@@ -204,21 +213,27 @@ pub fn RdyQueue() type {
             // }
         }
 
-        // if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-        fn calc_top_priority(bitmap: usize, pos: isize) isize {
-            for (pos..knldef.NUM_TSKPRI - 1) |_| {
-                if (bitmap & (1 << pos)) {
-                    return pos;
+        fn calc_top_priority(this: *This, bitmap: PRI, pos: PRI) PRI {
+            if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
+                _ = this;
+                // because of pos is contant.
+                libtm.intPrint("pos", pos);
+                libtm.intPrint("bitmap", bitmap);
+                var i = pos;
+                while (i < knldef.NUM_TSKPRI - 1) : (i += 1) {
+                    if (bitmap ^ @as(u32, 1) << @as(u5, @intCast(i)) == 0) {
+                        return i;
+                    }
+                } else {
+                    return knldef.NUM_TSKPRI;
                 }
             }
-            return knldef.NUM_TSKPRI;
         }
-        // }
 
         // * Move the task, whose ready queue priority is 'priority', at head of
         // * queue to the end of queue. Do nothing, if the queue is empty.
         pub fn rotate(this: *This, priority: PRI) void {
-            var tskque = &this.tskque[priority];
+            const tskque = &this.tskque[priority];
 
             var tcb: ?*TCB = tskque.*.dequeue();
             if (tcb) {
@@ -228,7 +243,7 @@ pub fn RdyQueue() type {
 
         // * Put 'tcb' to the end of ready queue.
         pub fn move_last(this: *This, tcb: *TCB) *TCB {
-            var tskque = &this.tskque[tcb.priority];
+            const tskque = &this.tskque[tcb.priority];
             _ = tcb.tskque.*.dequeue();
             tskque.*.insert(tcb.tskque);
             return tskque.*.next.?.data; // New task at head of queue */
@@ -236,4 +251,4 @@ pub fn RdyQueue() type {
     };
 }
 
-pub var knl_ready_queue = RdyQueue().init();
+pub export var knl_ready_queue = RdyQueue().init();

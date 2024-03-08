@@ -20,34 +20,25 @@ pub const CTXB = struct {
 // Control register operation */
 
 pub inline fn knl_get_ipsr() u32 {
-    var ipsr: u32 = undefined;
-    asm volatile (
-        \\mrs %0,
-        \\ipsr:
-        // ++ "\n" ++
-        \\=r(ipsr)
+    var _ipsr: u32 = undefined;
+    asm volatile ("mrs %[ret], ipsr"
+        : [ret] "=r" (_ipsr),
     );
-    return ipsr;
+    return _ipsr;
 }
 
 pub inline fn knl_get_xpsr() u32 {
-    var xpsr: u32 = undefined;
-    asm volatile (
-        \\mrs %0,
-        \\psr:
-        // ++ "\n" ++
-        \\=r(xpsr)
+    var _xpsr: u32 = undefined;
+    asm volatile ("mrs %[ret], xpsr"
+        : [ret] "=r" (_xpsr),
     );
-    return xpsr;
+    return _xpsr;
 }
 
 pub inline fn knl_get_primask() u32 {
-    var primask: u32 = undefined;
-    asm volatile (
-        \\mrs %0,
-        \\primask:
-        // ++ "\n" ++
-        \\=r(primask)
+    var _primask: u32 = undefined;
+    asm volatile ("mrs %[ret], primask"
+        : [ret] "=r" (_primask),
     );
-    return primask;
+    return _primask;
 }

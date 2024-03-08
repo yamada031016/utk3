@@ -30,7 +30,8 @@ pub fn CheckInt_nvic(intno: usize) bool {
 pub inline fn set_basepri(intsts: u32) void {
     // serial.print("set_basepri() start");
     // defer serial.print("set_basepri() end");
-    asm volatile ("msr basepri, %[_intsts]"
+    asm volatile (
+        \\ msr basepri, %[_intsts]
         :
         : [_intsts] "r" (intsts),
     );
@@ -39,23 +40,27 @@ pub inline fn set_basepri(intsts: u32) void {
 // Get Base Priority register
 pub fn get_basepri() u32 {
     var basepri: u32 = undefined;
+    _ = &basepri;
 
-    // asm volatile ("mrs %0, basepri"
-    //     : [ret] "=r" (basepri),
-    // );
+    asm volatile (
+        \\mrs %[ret], basepri
+        : [ret] "=r" (basepri),
+    );
     return basepri;
 }
 
 // Disable interrupt */
 pub fn disint() u32 {
-    var intsts: u32 = 0;
+    comptime var intsts: u32 = 0;
+    _ = &intsts;
 
-    var maxint: u32 = sysdef.core.INTPRI_VAL(sysdef.cpu.INTPRI_MAX_EXTINT_PRI);
-    asm volatile ("mrs %[_intsts], basepri"
-        :
-        : [_intsts] "r" (intsts),
+    const maxint: u32 = sysdef.core.INTPRI_VAL(sysdef.cpu.INTPRI_MAX_EXTINT_PRI);
+    asm volatile (
+        \\mrs %[_intsts], basepri
+        : [_intsts] "=r" (intsts),
     );
-    asm volatile ("msr basepri, %[_maxint]"
+    asm volatile (
+        \\msr basepri, %[_maxint]
         :
         : [_maxint] "r" (maxint),
     );
@@ -70,7 +75,7 @@ pub fn SetCpuIntLevel(level: isize) void {
 
 // Get Interrupt Mask Level in CPU */
 pub fn GetCpuIntLevel() isize {
-    var lv: isize = @as(isize, get_basepri()) >> (8 - sysdef.INTPRI_BITWIDTH) - 1;
+    const lv: isize = @as(isize, get_basepri()) >> (8 - sysdef.INTPRI_BITWIDTH) - 1;
     return if (lv < 0) syslib.INTLEVEL_EI else lv;
 }
 
@@ -78,7 +83,8 @@ pub fn GetCpuIntLevel() isize {
 
 // Enable interrupt for NVIC */
 pub fn EnableInt_nvic(intno: usize, level: isize) void {
-    var imask: usize = undefined;
+    comptime var imask: usize = undefined;
+    _ = &imask;
 
     syslib.DI(imask);
     defer syslib.EI(imask);

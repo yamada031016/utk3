@@ -84,7 +84,7 @@ pub fn knl_get_reg(tcb: *TCB, regs: *cpudef.T_REGS, eit: *cpudef.T_EIT, cregs: *
     //         ssp = @as(*SStackFrame, tmpp);
     //     }
     // } else {
-    var ssp: *SStackFrame = @as(*SStackFrame, tcb.tskctxb.ssp);
+    const ssp: *SStackFrame = @as(*SStackFrame, tcb.tskctxb.ssp);
     // }
 
     if (regs != null) {

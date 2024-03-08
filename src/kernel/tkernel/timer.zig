@@ -17,13 +17,13 @@ const sys_timer = knlink.sysdepend.sys_timer;
 // typedef	D	i64;	// SYSTIM int. expression */
 
 inline fn knl_toLSYSTIM(time: *SYSTIM) i64 {
-    var ltime: i64 = undefined;
+    const ltime: i64 = undefined;
     knlink.hilo_ll(ltime, time.hi, time.lo);
     return ltime;
 }
 
 inline fn knl_toSYSTIM(ltime: i64) SYSTIM {
-    var time: SYSTIM = undefined;
+    const time: SYSTIM = undefined;
     knlink.ll_hilo(time.hi, time.lo, ltime);
     return time;
 }
@@ -91,7 +91,7 @@ inline fn knl_timer_delete(event: *TMEB) void {
 // Noinit(EXPORT QUEUE	knl_timer_queue);
 
 // * Start system timer */
-pub fn knl_timer_startup() TkError!void {
+pub fn knl_timer_startup() !void {
     knl_real_time_ofs = 0;
     knl_current_time = knl_real_time_ofs;
     // knl_timer_queue already initialized.
@@ -110,7 +110,7 @@ pub fn knl_timer_startup() TkError!void {
 
 // * Insert timer event to timer event queue */
 fn knl_enqueue_tmeb(event: *TMEB) void {
-    var ofs: u32 = knl_current_time - ABSTIM_DIFF_MIN;
+    const ofs: u32 = knl_current_time - ABSTIM_DIFF_MIN;
     var q = knl_timer_queue.next.?;
     while (q != &knl_timer_queue) : (q = q.next.?) {
         if (@as(u32, event.time - ofs) < @as(u32, ((@as(*TMEB, q).time) - ofs))) {

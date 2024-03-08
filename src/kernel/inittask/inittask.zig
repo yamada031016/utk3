@@ -1,5 +1,6 @@
 const config = @import("config");
 const knlink = @import("knlink");
+const cpu_status = knlink.sysdepend.core.cpu_status;
 const devinit = knlink.sysdepend.devinit;
 const inittask = knlink.inittask;
 const usermain = knlink.usermain.usermain;
@@ -12,7 +13,7 @@ const print = serial.print;
 const init_task_stack: [INITTASK_STKSZ / @sizeOf(isize)]isize = [_]isize{1} ** 256;
 
 const INITTASK_EXINF = 0x0;
-const INITTASK_ITSKPRI = 1;
+const INITTASK_ITSKPRI = 10;
 const INITTASK_DSNAME = "inittsk";
 const INITTASK_TSKATR = if (config.USE_IMALLOC) syscall.TA_HLNG | syscall.TA_RNG0 else syscall.TA_HLNG | syscall.TA_RNG0 | syscall.TA_USERBUF;
 // sspをRAM領域に置くためconstではない
@@ -97,9 +98,12 @@ fn shutdown_system(fin: i32) void {
             hw_setting.knl_restart_hw(fin);
         }
 
-        // knl_tkernel_exit(); // Stop system
+        knlink.sysinit.knl_tkernel_exit(); // Stop system
     } else {
-        // cpu_status.DISABLE_INTERRUPT();
-        while (true) {}
+        cpu_status.DISABLE_INTERRUPT();
+        print("\r\nmicroT-Kernel shutdown...\r\n");
+        while (true) {
+            asm volatile ("nop");
+        }
     }
 }

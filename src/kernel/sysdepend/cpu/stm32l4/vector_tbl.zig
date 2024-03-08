@@ -15,8 +15,9 @@ pub const Handler = *const fn () callconv(.C) void;
 
 pub fn irq_handler() callconv(.C) void {
     print("launched irq handler!");
-    // return;
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn systick_handler() callconv(.C) void {
@@ -30,44 +31,58 @@ pub fn systick_handler() callconv(.C) void {
 
 pub fn default_handler() callconv(.C) void {
     print("launched default handler!");
-    // return;
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn nmi_handler() callconv(.C) void {
     print("launched nmi handler!");
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn hard_handler() callconv(.C) void {
     print("launched hard fault handler!");
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn mpu_handler() callconv(.C) void {
     print("launched mpu fault handler!");
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn bus_handler() callconv(.C) void {
     print("launched bus fault handler!");
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn usage_handler() callconv(.C) void {
     print("launched usage fault handler!");
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn svcall_handler() callconv(.C) void {
     print("launched svcall handler!");
-    while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 pub fn debug_monitor_handler() callconv(.C) void {
     print("launched debug_monitor handler!");
-    return;
-    // while (true) {}
+    while (true) {
+        asm volatile ("nop");
+    }
 }
 
 extern fn Reset_Handler() noreturn;
@@ -84,7 +99,7 @@ pub const VectorTable = extern struct {
     svcall: Handler = default_handler,
     debug_monitor_handler: Handler = default_handler,
     reserved2: usize = undefined,
-    pend_sv: Handler = default_handler,
+    pend_sv: *const fn () callconv(.Naked) void,
     systick: Handler,
     irq: [32]Handler = [_]Handler{irq_handler} ** 32,
 };

@@ -61,9 +61,9 @@ export fn Reset_Handler() callconv(.C) noreturn {
     }
 
     // Load .data to ram
-    var data_src = @as(*volatile usize, @ptrCast(&__data_org));
-    var data_top = @as(*volatile usize, @ptrCast(&__data_start));
-    var data_end: *volatile usize = @as(*volatile usize, @ptrCast(&__data_end));
+    var data_src = @as(*volatile usize, @constCast(&__data_org));
+    var data_top = @as(*volatile usize, @constCast(&__data_start));
+    const data_end: *volatile usize = @as(*volatile usize, @constCast(&__data_end));
 
     while (data_top != data_end) {
         // *top++ = *src++;
@@ -77,7 +77,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
     // if (comptime config.USE_NOINIT) {
     // top = @ptrCast(&__noinit_end);
     // } else {
-    var bss_top = @as(*volatile usize, @ptrCast(&__bss_start));
+    var bss_top = @as(*volatile usize, @constCast(&__bss_start));
     // hexdump("__bss_start", @intFromPtr(&__bss_start));
     // hexdump("__bss_end", @intFromPtr(&__bss_end));
     // }

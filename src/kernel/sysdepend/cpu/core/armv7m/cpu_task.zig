@@ -14,13 +14,13 @@ pub const SStackFrame = struct {
     // Exception entry stack
     r: [4]usize, // R0-R3 */
     ip: usize, // R12 */
-    lr: ?*anyopaque, // lr */
-    pc: ?*anyopaque, // pc */
+    lr: ?*void, // lr */
+    pc: ?*void, // pc */
     xpsr: usize, // xpsr */
 };
 
 // Size of system stack area destroyed by 'make_dormant()'
-//In other words, the size of area required to write by 'knl_setup_context().'
+// In other words, the size of area required to write by 'knl_setup_context().'
 pub const DORMANT_STACK_SIZE = @sizeOf(i32); //7  // To 'R4' position */
 
 // if (comptime  USE_FPU) {

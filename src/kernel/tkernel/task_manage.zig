@@ -45,16 +45,15 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
     try check.CHECK_PRI(pk_ctsk.itskpri);
 
     if ((pk_ctsk.tskatr & syscall.TA_USERBUF) != 0) {
-        // Use user buffer */
+        // Use user buffer
         sstksz = pk_ctsk.stksz;
         try check.CHECK_PAR(sstksz >= sysdef.core.MIN_SYS_STACK_SIZE);
         stack = pk_ctsk.bufptr;
     } else {
         if (comptime config.USE_IMALLOC) {
-            // Allocate system stack area */
+            // Allocate system stack area
             sstksz = pk_ctsk.stksz + sysdef.core.DEFAULT_SYS_STKSZ;
             sstksz = (sstksz + 7) & ~@as(usize, @intCast(0x07)); // Align to a multiple of 8 */
-            // sstksz = (sstksz + 7) / 8 * 8; // Align to a multiple of 8 */
             // stack = knl_Imalloc(@as(u32, sstksz));
             if (stack == null) {
                 return TkError.InsufficientMemory;
@@ -65,18 +64,6 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
     {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
-
-        // Get control block from FreeQue */
-        // var free_tcb: ?*TCB = free_tcb: {
-        //     if (task.knl_free_tcb.dequeue()) |_free_tcb| {
-        //         // print("return tcb in :free_tcb:");
-        //         break :free_tcb _free_tcb;
-        //     } else {
-        //         // print("return null in :free_tcb:");
-        //         // return TkError.ExceedSystemLimits;
-        //         break :free_tcb null;
-        //     }
-        // };
 
         var tcb = for (0..libsys.knldef.NUM_TSKID) |i| {
             if (task.knl_tcb_table[i].state == task.TSTAT.NONEXIST) {
@@ -90,7 +77,8 @@ pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
         tcb.exinf = pk_ctsk.exinf;
         tcb.tskatr = pk_ctsk.tskatr;
         tcb.task = pk_ctsk.task;
-        tcb.ipriority = task.int_priority(pk_ctsk.itskpri);
+        // tcb.ipriority = task.int_priority(pk_ctsk.itskpri);
+        tcb.ipriority = pk_ctsk.itskpri;
         tcb.sstksz = sstksz;
         if (comptime config.USE_OBJECT_NAME) {
             if ((pk_ctsk.tskatr & syscall.TA_DSNAME) != 0) {
@@ -133,8 +121,9 @@ fn knl_del_tsk(tcb: *TCB) void {
     }
 
     // Return control block to FreeQue */
-    queue.QueInsert(&tcb.tskque, &task.knl_free_tcb);
-    tcb.state = TSTAT.TS_NONEXIST;
+    // queue.QueInsert(&tcb.tskque, &task.knl_free_tcb);
+    task.knl_free_tcb.enqueue(tcb);
+    tcb.state = TSTAT.NONEXIST;
 }
 
 // if (comptime USE_FUNC_TK_DEL_TSK) {
@@ -143,11 +132,11 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
     try check.CHECK_TSKID(tskid);
     try check.CHECK_NONSELF(tskid);
 
-    var tcb: *TCB = task.get_tcb(tskid);
+    const tcb: *TCB = task.get_tcb(tskid);
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
-    var state: TSTAT = @as(TSTAT, tcb.state);
+    const state: TSTAT = @as(TSTAT, tcb.state);
     if (state != TSTAT.TS_DORMANT) {
         if (state == TSTAT.TS_NONEXIST) {
             return TkError.ObjectNotExist;
@@ -162,10 +151,10 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 
 // Start task
 pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
-    // tm_printf("tk_sta_tsk start.", .{});
-    @import("devices").serial.print("tk_sta_tsk start.");
+    tm_printf("tk_sta_tsk start.", .{});
     defer tm_printf("tk_sta_tsk end.", .{});
     errdefer libtm.tm_eprintf("tk_sta_tsk failed.", .{});
+
     check.CHECK_TSKID(tskid) catch |err| {
         return err;
     };
@@ -173,29 +162,38 @@ pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
         return err;
     };
 
-    var tcb: *TCB = task.get_tcb(tskid);
+    const tcb: *TCB = task.get_tcb(tskid);
 
     {
         cpu_status.BEGIN_CRITICAL_SECTION();
         defer cpu_status.END_CRITICAL_SECTION();
-        var state: TSTAT = tcb.state;
-        if (state != TSTAT.DORMANT) {
-            if (state == TSTAT.NONEXIST) {
-                return TkError.ObjectNotExist;
-            } else {
-                return TkError.IncorrectObjectState;
-            }
-        } else {
-            cpu_task.knl_setup_stacd(tcb, stacd);
-            task.knl_make_ready(tcb);
+
+        const state: TSTAT = tcb.state;
+        switch (state) {
+            .DORMANT => {
+                cpu_task.knl_setup_stacd(tcb, stacd);
+                task.knl_make_ready(tcb);
+            },
+            .NONEXIST => return TkError.ObjectNotExist,
+            else => return TkError.IncorrectObjectState,
         }
+        // if (state != TSTAT.DORMANT) {
+        //     if (state == TSTAT.NONEXIST) {
+        //         return TkError.ObjectNotExist;
+        //     } else {
+        //         return TkError.IncorrectObjectState;
+        //     }
+        // } else {
+        //     cpu_task.knl_setup_stacd(tcb, stacd);
+        //     task.knl_make_ready(tcb);
+        // }
     }
 }
 
 // * Task finalization
 // *	Call from critical section
 fn knl_ter_tsk(tcb: *TCB) void {
-    var state: TSTAT = @as(TSTAT, tcb.state);
+    const state: TSTAT = @as(TSTAT, tcb.state);
     if (state == TSTAT.READY) {
         task.knl_make_non_ready(tcb);
     } else if ((@intFromEnum(state) & @intFromEnum(TSTAT.WAIT)) != 0) {
@@ -226,7 +224,9 @@ pub fn tk_ext_tsk() void {
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
             tm_printf("tk_ext_tsk was called in the task independent", .{});
-            while (true) {}
+            while (true) {
+                asm volatile ("nop");
+            }
             unreachable;
         }
     }
@@ -246,8 +246,9 @@ pub fn tk_ext_tsk() void {
     }
 
     cpu_ctrl.knl_force_dispatch();
-    // unreachableなはず。なら下のコードはなんのために?
+    unreachable;
 
+    // unreachableなはず。なら下のコードはなんのために?
     // if (comptime cpu_task.DORMANT_STACK_SIZE) {
     //     // volatileついてた
     //     var _dummy: [cpu_task.DORMANT_STACK_SIZE]i8 = undefined;
@@ -275,10 +276,13 @@ pub fn tk_exd_tsk() void {
 
     // enableしてないけどええんか？
     cpu_status.DISABLE_INTERRUPT();
-    knl_ter_tsk(knlink.knl_ctxtsk);
-    knl_del_tsk(knlink.knl_ctxtsk);
+    if (knlink.knl_ctxtsk) |current_task| {
+        knl_ter_tsk(current_task);
+        knl_del_tsk(current_task);
+    }
 
-    cpu_ctrl.knl_force_dispatch();
+    // cpu_ctrl.knl_force_dispatch();
+    cpu_ctrl.knl_dispatch();
     unreachable;
 }
 // }
@@ -291,11 +295,11 @@ pub fn tk_ter_tsk(tskid: u32) TkError!void {
     try check.CHECK_TSKID(tskid);
     try check.CHECK_NONSELF(tskid);
 
-    var tcb: *TCB = task.get_tcb(tskid);
+    const tcb: *TCB = task.get_tcb(tskid);
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
-    var state: TSTAT = @as(TSTAT, tcb.state);
+    const state: TSTAT = @as(TSTAT, tcb.state);
     if (!task.knl_task_alive(state)) {
         if (state == TSTAT.NONEXIST) {
             return TkError.ObjectNotExist;
@@ -389,13 +393,13 @@ pub fn tk_get_tid() isize {
 pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
     try check.CHECK_TSKID_SELF(tskid);
 
-    var tcb: *TCB = task.get_tcb_self(tskid);
+    const tcb: *TCB = task.get_tcb_self(tskid);
 
     tstd.knl_memset(pk_rtsk, 0, @sizeOf(*pk_rtsk));
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
-    var state: TSTAT = @as(TSTAT, tcb.state);
+    const state: TSTAT = @as(TSTAT, tcb.state);
     if (state == TSTAT.NONEXIST) {
         return TkError.ObjectNotExist;
     } else {
@@ -422,11 +426,11 @@ pub fn tk_ref_tsk(tskid: u32, pk_rtsk: *syscall.T_RTSK) TkError!void {
 pub fn tk_rel_wai(tskid: u32) TkError!void {
     try check.CHECK_TSKID(tskid);
 
-    var tcb: *TCB = task.get_tcb(tskid);
+    const tcb: *TCB = task.get_tcb(tskid);
 
     cpu_status.BEGIN_CRITICAL_SECTION();
     defer cpu_status.END_CRITICAL_SECTION();
-    var state: TSTAT = @as(TSTAT, tcb.state);
+    const state: TSTAT = @as(TSTAT, tcb.state);
     if ((state & TSTAT.WAIT) == 0) {
         if (state == TSTAT.NONEXIST) {
             return TkError.E_NOEXS;

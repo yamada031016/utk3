@@ -27,8 +27,8 @@ pub fn knl_hll_inthdr() void {
     cpu_status.ENTER_TASK_INDEPENDENT();
     defer cpu_status.LEAVE_TASK_INDEPENDENT();
 
-    var intno: u32 = knlink.sysdepend.sysdepend.knl_get_ipsr() - 16;
-    var inthdr: *const fn () void = knl_inthdr_tbl[intno];
+    const intno: u32 = knlink.sysdepend.sysdepend.knl_get_ipsr() - 16;
+    const inthdr: *const fn () void = knl_inthdr_tbl[intno];
     // (inthdr.*)(intno);
     inthdr(intno);
 }

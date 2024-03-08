@@ -55,7 +55,7 @@ fn knl_tcb_table_init() void {
             var dummy: *TCB = undefined;
             var dummy_stack: *knlink.sysdepend.core.cpu_task.SStackFrame = undefined;
             _tcb[i] = TCB{
-                .tskque = @constCast(&TCB.Node{ .next = dummy, .prev = null }),
+                .tskque = @constCast(&TCB.Node{ .next = dummy, .prev = dummy }),
                 // .tskque = null,
                 .tskid = i + 1,
                 .task = @as(*usize, @ptrCast(&dummy)),
@@ -111,7 +111,7 @@ fn knl_tcb_table_init() void {
 //     break :tcb_table tmp;
 // };
 
-pub var knl_free_tcb = TkQueue(?*TCB).init();
+pub var knl_free_tcb = TkQueue(*TCB).init();
 
 // * Get TCB from task ID.
 pub inline fn get_tcb(id: usize) *TCB {
@@ -160,7 +160,7 @@ pub inline fn get_tcb_self(id: isize) TCB {
 // * Reselect task to execute
 // *	Set 'schedtsk' to the head task at the ready queue.
 pub inline fn knl_reschedule() void {
-    var toptsk: *TCB = ready_queue.knl_ready_queue.top();
+    const toptsk: *TCB = ready_queue.knl_ready_queue.top();
     if (knlink.knl_schedtsk) |elem| {
         if (elem != toptsk) {
             elem.* = toptsk.*;
@@ -223,7 +223,7 @@ pub fn knl_make_dormant(tcb: *TCB) void {
     // Initialize variables which should be reset at DORMANT state */
     tcb.state = TSTAT.DORMANT;
     tcb.bpriority = tcb.ipriority;
-    tcb.priority = tcb.bpriority;
+    tcb.priority = tcb.ipriority;
     tcb.sysmode = tcb.isysmode;
     tcb.wupcnt = 0;
     tcb.suscnt = 0;
@@ -260,7 +260,9 @@ pub fn knl_make_ready(tcb: *TCB) void {
 pub fn knl_make_non_ready(tcb: *TCB) void {
     ready_queue.knl_ready_queue.delete(tcb);
     if (knlink.knl_schedtsk.? == tcb) {
+        tm_printf("non ready!", .{});
         knlink.knl_schedtsk = ready_queue.knl_ready_queue.top();
+        libtm.intPrint("tskid", knlink.knl_schedtsk.?.tskid);
     }
 }
 
@@ -276,7 +278,7 @@ pub fn knl_change_task_priority(tcb: *TCB, priority: PRI) void {
         ready_queue.knl_ready_queue_insert(&ready_queue.knl_ready_queue, tcb);
         knl_reschedule();
     } else {
-        var oldpri: PRI = tcb.priority;
+        const oldpri: PRI = tcb.priority;
         _ = oldpri;
         tcb.priority = @truncate(priority); // isize -> u8
 
