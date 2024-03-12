@@ -2,12 +2,9 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
     const target = std.zig.CrossTarget{
-        // .cpu_arch = std.Target.Cpu.Arch.arm,
-        // .os_tag = std.Target.Os.Tag.freestanding,
-        // .abi = std.Target.Abi.none,
         .cpu_arch = .thumb,
         .os_tag = .freestanding,
-        .abi = .eabi, // noneでも動いた
+        .abi = .eabi,
         .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
         .ofmt = .elf,
     };
