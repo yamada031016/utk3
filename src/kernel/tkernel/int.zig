@@ -1,15 +1,15 @@
 // *	Interrupt Control
 const knlink = @import("knlink");
-const inc_sys = @import("inc_sys");
+const libsys = @import("libsys");
 const libtk = @import("libtk");
 const TkError = libtk.errno.TkError;
 const check = knlink.check;
 const config = @import("config");
-const knldef = inc_sys.knldef;
+const knldef = libsys.knldef;
 const syscall = libtk.syscall;
 // const T_DEVREQ = syscall.T_DEVREQ;
 const cpu_status = knlink.sysdepend.cpu_status;
-const sysdef = inc_sys.sysdef;
+const sysdef = libsys.sysdef;
 const interrupt = knlink.sysdepend.interrupt;
 
 // * Interrupt handler definition

@@ -1,6 +1,5 @@
 const libsys = @import("libsys");
 const sysdef = libsys.sysdepend.sysdef;
-//micro T-Kernel System Library  (STM32L4 depended)
 //Interrupt Control */
 // Interrupt number */
 pub const MIN_NVIC_INTNO = 0; // Minimum value of NVIC interrupt number */

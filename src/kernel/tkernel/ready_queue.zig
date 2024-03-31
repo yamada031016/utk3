@@ -252,3 +252,20 @@ pub fn RdyQueue() type {
 }
 
 pub export var knl_ready_queue = RdyQueue().init();
+
+test "ready queue insert" {
+    const std = @import("std");
+    const expect = std.testing.expect;
+    const syscall = libtk.syscall;
+    var test_ready_queue = RdyQueue().init();
+    const test_tsk = syscall.T_CTSK{
+        .exinf = null,
+        .tskatr = syscall.TA_HLNG | syscall.TA_RNG0,
+        .task = null,
+        .itskpri = 7,
+        .stksz = 1 * 1024,
+        .bufptr = null,
+    };
+    test_ready_queue.insert(&test_tsk);
+    expect(test_ready_queue.getTopPriority() == 7);
+}

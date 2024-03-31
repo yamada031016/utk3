@@ -18,7 +18,7 @@ SECTIONS {
 		*(.rodata.*)
         __rom_end = .;
 	} >ROM
-	. = ALIGN(4);
+	. = ALIGN(8);
 	__data_org = .;
 	vector 0x20000000 (NOLOAD) : {
 		__vector_start = .;
@@ -29,10 +29,10 @@ SECTIONS {
 		__data_start = .;
 		*(.data)
 		*(.data.*)
-		. = ALIGN(4);
+		. = ALIGN(8);
 		__data_end = .;
 	} >RAM
-	.bss ALIGN(4) (NOLOAD) : {
+	.bss ALIGN(8) (NOLOAD) : {
 		__bss_start = .;
 		PROVIDE (__noinit_start = .);
 		*(.noinit)
@@ -40,7 +40,7 @@ SECTIONS {
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-		. = ALIGN(4);
+		. = ALIGN(8);
 		__bss_end = .;
 		__end = .;
 	} >RAM

@@ -88,22 +88,21 @@ pub fn build(b: *std.Build) !void {
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
-    const test_target = std.zig.CrossTarget{
-        // .cpu_arch = std.Target.Cpu.Arch.arm,
-        // .os_tag = std.Target.Os.Tag.freestanding,
-        // .abi = std.Target.Abi.none,
-        // .cpu_arch = .x86,
-        // .os_tag = .linux,
-        // .abi = .eabi,
-        // .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
-        .ofmt = .elf,
-    };
+
+    const test_target = std.zig.CrossTarget{};
 
     const unit_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "src/kernel/sysdepend/cpu/core/armv7m/reset_hdl.zig" },
         .target = test_target,
         .optimize = optimize,
     });
+    unit_tests.addModule("config", config);
+    unit_tests.addModule("devices", devices);
+    unit_tests.addModule("libtk", libtk);
+    unit_tests.addModule("libsys", libsys);
+    unit_tests.addModule("libtm", libtm);
+    unit_tests.addModule("knlink", knlink);
+    unit_tests.setLinkerScript(.{ .path = "./tkernel_map.ld" });
 
     const run_unit_tests = b.addRunArtifact(unit_tests);
 

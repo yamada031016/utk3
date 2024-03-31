@@ -36,10 +36,8 @@ pub fn TkQueue(comptime T: type) type {
             var node = Node{ .data = value, .next = null, .prev = this.end };
             this.end = &node;
             if (node.prev) |prev_node| {
-                // print("que exists");
                 prev_node.next = &node;
             } else {
-                // print("que null");
                 this.start = &node;
             }
         }

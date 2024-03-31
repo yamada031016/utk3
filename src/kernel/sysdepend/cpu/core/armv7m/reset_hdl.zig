@@ -31,7 +31,6 @@ extern const __end: usize;
 // }
 
 extern const vector_tbl: VectorTable;
-// extern const __vector_org: usize;
 export fn Reset_Handler() callconv(.C) noreturn {
     // Startup Hardware
     hw_setting.knl_startup_hw();
@@ -55,8 +54,6 @@ export fn Reset_Handler() callconv(.C) noreturn {
         }
 
         // Set Vector Table offset to SRAM
-        // @as(*volatile usize, @ptrFromInt(sysdef.core.SCB_VTOR)).* = interrupt.exchdr_tbl[0];
-        // あってんのかこれで
         @as(*volatile usize, @ptrFromInt(sysdef.core.SCB_VTOR)).* = @intFromPtr(&vector_tbl);
     }
 
@@ -78,16 +75,11 @@ export fn Reset_Handler() callconv(.C) noreturn {
     // top = @ptrCast(&__noinit_end);
     // } else {
     var bss_top = @as(*volatile usize, @constCast(&__bss_start));
-    // hexdump("__bss_start", @intFromPtr(&__bss_start));
-    // hexdump("__bss_end", @intFromPtr(&__bss_end));
     // }
     var i = @intFromPtr(&__bss_end) - @intFromPtr(bss_top);
-    i /= 8;
-    // hexdump("i", @truncate(i / 4));
-    // hexdump("i", i);
+    i /= @sizeOf(usize);
     while (i > 0) : (i -= 1) {
-        // bss_top = @ptrFromInt(@intFromPtr(bss_top) + @sizeOf(usize));
-        bss_top = @ptrFromInt(@intFromPtr(bss_top) + 8);
+        bss_top = @ptrFromInt(@intFromPtr(bss_top) + @sizeOf(usize));
         bss_top.* = 0;
     }
 

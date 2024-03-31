@@ -16,11 +16,10 @@ const serial = @import("devices").serial;
 const libtm = @import("libtm");
 const tm_printf = libtm.tm_printf;
 
-//Check object ID range (TkError.E_ID)
-
 // if (comptime config.CHK_ID) {
 pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
     errdefer libtm.tm_eprintf("CHECK_TSKID() failed.", .{});
+
     if (!in_indp() and (tskid == syscall.TSK_SELF)) {
         return TkError.IncorrectObjectState;
     } else if (!knldef.CHK_TSKID(tskid)) {
