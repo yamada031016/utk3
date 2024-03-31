@@ -9,7 +9,6 @@ const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
 const serial = @import("devices").serial;
 const hexdump = serial.hexdump;
-const intPrint = serial.intPrint;
 const libtm = @import("libtm");
 const tm_printf = libtm.tm_printf;
 
@@ -38,7 +37,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
         knlink.sysdepend.devinit.knl_start_device();
     }
     const a = @import("libtk").syslib.cpu.read(@intFromEnum(sysdef.TIM16.CNT));
-    libtm.intPrint("timer at reset handler: ", a);
+    tm_printf("timer at reset handler: ", .{a});
 
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
@@ -69,6 +68,9 @@ export fn Reset_Handler() callconv(.C) noreturn {
         data_src = @ptrFromInt(@intFromPtr(data_src) + @sizeOf(usize));
     }
     tm_printf("\x1b[32m[START] Reset_Handler!!!\x1b[0m", .{});
+    const world = "world";
+    tm_printf("hello ", .{world});
+    tm_printf("number ", .{1});
 
     // Initialize .bss
     // if (comptime config.USE_NOINIT) {

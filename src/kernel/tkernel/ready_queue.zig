@@ -12,24 +12,9 @@ const INT_BITWIDTH = libsys.machine.INT_BITWIDTH;
 const libtm = @import("libtm");
 const tm_printf = libtm.tm_printf;
 
-// * Definition of ready queue structure
-// *	In the ready queue, the task queue 'tskque' is provided per priority.
-// *	The task TCB is registered onto queue with the applicable priority.
-// *	For effective ready queue search, the bitmap area 'bitmap' is provided
-// *	to indicate whether there are tasks in task queue per priority.
-// *
-// *	Also, to search a task at the highest priority in the ready queue
-// *    	effectively, put the highest task priority in the 'top_priority' field.
-// *	If the ready queue is empty, set the value in this field to NUM_TSKPRI.
-// *	In this case, to return '0' with refering 'tskque[top_priority]',
-// *      there is 'null' field which is always '0'.
-// *
-// *	Multiple READY tasks with kernel lock do not exist at the same time.
-
 const BITMAPSZ = @sizeOf(usize) * 8;
 const NUM_BITMAP = (knldef.NUM_TSKPRI + BITMAPSZ - 1) / BITMAPSZ;
 
-// nullはOptional型があるので消してよし
 pub fn RdyQueue() type {
     return extern struct {
         const This = @This();
@@ -55,12 +40,7 @@ pub fn RdyQueue() type {
         pub fn top(this: *This) *TCB {
             tm_printf("ready queue top() start", .{});
             defer tm_printf("ready queue top() end", .{});
-            // If there is a task at kernel lock, that is the highest priority task */
-            // if (this.klocktsk) |elem| {
-            //     tm_printf("klocktsk", .{});
-            //     return elem;
-            // }
-            libtm.intPrint("top pri", this.top_priority);
+            tm_printf("top pri", .{this.top_priority});
             return this.tskque[this.top_priority - 1].?;
         }
 
@@ -97,26 +77,26 @@ pub fn RdyQueue() type {
                 // tsk = elem;
             } else {
                 this.tskque[priority - 1] = tcb;
-                libtm.intPrint("usermain tskid", this.tskque[9].?.tskid);
+                tm_printf("usermain tskid", .{this.tskque[9].?.tskid});
                 tm_printf("tskque update", .{});
             }
 
             if (knldef.NUM_TSKPRI <= INT_BITWIDTH) {
-                libtm.intPrint("bitmap before", this.bitmap[0]);
+                tm_printf("bitmap before", .{this.bitmap[0]});
                 this.bitmap[0] |= @as(u32, 1) << @as(u5, @intCast(priority));
             } else {
                 tstd.knl_bitset(this.bitmap, priority);
             }
-            libtm.intPrint("bitmap after", this.bitmap[0]);
+            tm_printf("bitmap after", .{this.bitmap[0]});
 
             if (tcb.klocked) {
                 this.klocktsk = tcb;
             }
 
-            libtm.intPrint("top pri", this.top_priority);
+            tm_printf("top pri", .{this.top_priority});
             if (priority < this.top_priority) {
                 this.top_priority = priority;
-                libtm.intPrint("top pri", this.top_priority);
+                tm_printf("top pri", .{this.top_priority});
                 return true;
             } else {
                 return false;
@@ -187,7 +167,7 @@ pub fn RdyQueue() type {
                 this.tskque[priority - 1] = null;
             }
 
-            libtm.intPrint("bitmap before", this.bitmap[0]);
+            tm_printf("bitmap before", .{this.bitmap[0]});
             if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
                 // this.bitmap[0] &= ~(1 << priority);
                 this.bitmap[0] ^= (@as(u32, 1) << @as(u5, @intCast(priority)));
@@ -195,8 +175,8 @@ pub fn RdyQueue() type {
                 tstd.knl_bitclr(this.bitmap, priority);
             }
             // if (priority != this.top_priority) {
-            //     libtm.intPrint("top pri", this.top_priority);
-            //     libtm.intPrint(" pri", tcb.priority);
+            //     tm_printf("top pri", .{this.top_priority});
+            //     tm_printf(" pri", .{tcb.priority});
             //     tm_printf("pri in delete()", .{});
             //     return;
             // }
@@ -217,8 +197,8 @@ pub fn RdyQueue() type {
             if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
                 _ = this;
                 // because of pos is contant.
-                libtm.intPrint("pos", pos);
-                libtm.intPrint("bitmap", bitmap);
+                tm_printf("pos", .{pos});
+                tm_printf("bitmap", .{bitmap});
                 var i = pos;
                 while (i < knldef.NUM_TSKPRI - 1) : (i += 1) {
                     if (bitmap ^ @as(u32, 1) << @as(u5, @intCast(i)) == 0) {

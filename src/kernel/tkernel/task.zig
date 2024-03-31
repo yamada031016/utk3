@@ -262,7 +262,7 @@ pub fn knl_make_non_ready(tcb: *TCB) void {
     if (knlink.knl_schedtsk.? == tcb) {
         tm_printf("non ready!", .{});
         knlink.knl_schedtsk = ready_queue.knl_ready_queue.top();
-        libtm.intPrint("tskid", knlink.knl_schedtsk.?.tskid);
+        tm_printf("tskid", .{knlink.knl_schedtsk.?.tskid});
     }
 }
 

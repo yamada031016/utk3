@@ -3,6 +3,7 @@ pub const machine = @import("machine.zig");
 pub const queue = @import("queue.zig");
 pub const knldef = @import("knldef.zig");
 const libtm = @import("libtm");
+const tm_printf = libtm.tm_printf;
 
 extern const __data_start: usize;
 extern const __rom_end: usize;
@@ -11,9 +12,9 @@ extern const __end: usize;
 pub fn printMemoryUsage() void {
     const rom_usage = getRomUsage();
     const ram_usage = getRamUsage();
-    libtm.intPrint("total\t(byte)", ram_usage + rom_usage);
-    libtm.intPrint("rom\t(byte)", rom_usage);
-    libtm.intPrint("ram\t(byte)", ram_usage);
+    tm_printf("total\t(byte)", .{ram_usage + rom_usage});
+    tm_printf("rom\t(byte)", .{rom_usage});
+    tm_printf("ram\t(byte)", .{ram_usage});
 }
 
 pub fn getRomUsage() usize {
@@ -25,8 +26,8 @@ pub fn getRamUsage() usize {
 }
 
 pub fn printSystemTime() void {
-    libtm.intPrint("time:", getSystemTime());
+    tm_printf("time:", .{getSystemTime()});
 }
-pub fn getSystemTime() void {
+pub fn getSystemTime() usize {
     return @import("libtk").syslib.cpu.read(@intFromEnum(@import("libsys").sysdepend.sysdef.TIM16.CNT));
 }

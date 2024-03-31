@@ -71,7 +71,7 @@ pub fn main() !noreturn {
         return err;
     };
 
-    @import("libtm").intPrint("sysinit time:", @intCast(knlink.timer.knl_current_time));
+    @import("libtm").tm_printf("sysinit time:", .{@import("libsys").getSystemTime()});
     // Create & start initial task
     if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
         if (tskmng.tk_sta_tsk(tskid, 0)) {

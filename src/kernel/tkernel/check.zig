@@ -23,7 +23,6 @@ pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
     if (!in_indp() and (tskid == syscall.TSK_SELF)) {
         return TkError.IncorrectObjectState;
     } else if (!knldef.CHK_TSKID(tskid)) {
-        serial.intPrint("tskid", tskid);
         return TkError.IncorrectIdNumber;
     }
 }

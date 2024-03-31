@@ -10,9 +10,6 @@ fn dummy_task() void {
     print("\x1b[35m");
     print("dummy_task()!");
     print("\x1b[0m");
-    // while (true) {
-    //     asm volatile ("nop");
-    // }
     knlink.task_manage.tk_exd_tsk();
     print("end");
 }
@@ -82,12 +79,6 @@ pub fn usermain() i32 {
     }
 
     print("hogehoge~~");
-    // const rom_usage = (@intFromPtr(&__rom_end) - 0x0800_0000) / 8;
-    // const ram_usage = (@intFromPtr(&__end) - @intFromPtr(&__data_start)) / 8;
-    // libtm.intPrint("total\t(byte)", ram_usage + rom_usage);
-    // libtm.intPrint("rom\t(byte)", rom_usage);
-    // libtm.intPrint("ram\t(byte)", ram_usage);
-    // libtm.intPrint("usermain time:", @import("libtk").syslib.cpu.read(@intFromEnum(@import("libsys").sysdepend.sysdef.TIM16.CNT)));
     // while (true) { asm volatile ("nop"); }
     return 0;
 }

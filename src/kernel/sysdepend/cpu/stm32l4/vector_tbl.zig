@@ -1,14 +1,8 @@
 const knlink = @import("knlink");
 const sysdef = @import("libsys").sysdepend.sysdef;
 const print = @import("devices").serial.print;
-// const reset_hdl = knlink.sysdepend.reset_hdl;
-// const exc_hdr = knlink.sysdepend.exc_hdr;
 const interrupt = knlink.sysdepend.interrupt;
 // if (comptime  CPU_STM32L4) {
-//Exception/Interrupt Vector Table
-
-// Exception/Interrupt Vector Table
-
 const knl_dispatch_entry = knlink.sysdepend.core.dispatch.knl_dispatch_entry;
 
 pub const Handler = *const fn () callconv(.C) void;
@@ -21,12 +15,8 @@ pub fn irq_handler() callconv(.C) void {
 }
 
 pub fn systick_handler() callconv(.C) void {
-    // print("launched systick handler!");
     knlink.timer.knl_timer_handler();
-    // @import("libtm").tm_printf("current time:", .{knlink.timer.knl_current_time});
-    // @import("libtm").intPrint("utk3が時刻をお知らせします.", @intCast(knlink.timer.knl_current_time));
     return;
-    // while (true) {}
 }
 
 pub fn default_handler() callconv(.C) void {
@@ -116,14 +106,5 @@ pub export const vector_tbl: VectorTable linksection(".vector") = .{
     .debug_monitor_handler = debug_monitor_handler,
     .pend_sv = knl_dispatch_entry,
     .systick = systick_handler,
-    // .nmi_handler = exc_hdr.NMI_Handler,
-    // .hard_fault_handler = exc_hdr.HardFault_Handler,
-    // .mpu_fault_handler = exc_hdr.MemManage_Handler,
-    // .bus_fault_handler = exc_hdr.BusFault_Handler,
-    // .usage_fault_handler = exc_hdr.UsageFault_Handler,
-    // .svcall = exc_hdr.Svcall_Handler,
-    // .debug_monitor_handler = exc_hdr.DebugMon_Handler,
-    // .systick = interrupt.knl_systim_inthdr,
-    // .irq = [_]Handler{knlink.default_handler} ** 32,
 };
 // } // CPU_STM32L4 */

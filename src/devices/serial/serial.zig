@@ -68,42 +68,6 @@ pub fn hexdump(name: []const u8, data: usize) void {
     puts("\r\n");
 }
 
-pub fn intPrint(name: []const u8, data: usize) void {
-    var vdata = data;
-    var a: [10]usize = undefined;
-    puts(name);
-    puts("\t\t\t");
-    for (0..10) |i| {
-        a[9 - i] = vdata % 10;
-        // std.debug.print("vdata: {}", .{vdata % 10});
-        vdata /= 10;
-        if (vdata == 0) {
-            break;
-        }
-    }
-    // std.debug.print("a: {any}", .{a});
-    for (a) |value| {
-        // std.debug.print("value: {}", .{value});
-        if (value > 10) {
-            continue;
-        }
-        _ = switch (value) {
-            0 => puts("0"),
-            1 => puts("1"),
-            2 => puts("2"),
-            3 => puts("3"),
-            4 => puts("4"),
-            5 => puts("5"),
-            6 => puts("6"),
-            7 => puts("7"),
-            8 => puts("8"),
-            9 => puts("9"),
-            else => unreachable,
-        };
-    }
-    puts("\r\n");
-}
-
 // 今はUSART2のみ対象
 pub fn dev_init_serial(unit: u8) void {
     _ = unit;

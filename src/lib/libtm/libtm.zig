@@ -27,96 +27,44 @@ pub fn tm_putstring(string: []const u8) void {
 }
 
 pub fn tm_printf(comptime string: []const u8, args: anytype) void {
-    // if (comptime dbg) {
-    if (args.len != 0) {
-        switch (@TypeOf(args[0])) {
-            isize,
-            i64,
-            i32,
-            i16,
-            i8,
-            u64,
-            u32,
-            u16,
-            u8,
-            usize,
-            comptime_int,
-            => {
-                const hoge = fmtDec(@intCast(args[0]));
-                tm_putstring(string);
-                tm_putchar('\t');
-                tm_putstring(hoge);
-            },
-            []const u8, []u8 => tm_putstring(args[0], .{}),
-            else => tm_putstring("elseや"),
+    if (comptime dbg) {
+        defer tm_putstring("\r\n");
+
+        if (args.len == 0) {
+            tm_putstring(string);
+        } else {
+            inline for (args) |value| {
+                switch (@typeInfo(@TypeOf(value))) {
+                    .Int, .Float, .ComptimeInt, .ComptimeFloat => {
+                        tm_putstring(string);
+                        const hoge = fmtDec(@intCast(value));
+                        _ = hoge;
+                        // tm_putstring(hoge);
+                    },
+                    .Pointer => |arr| {
+                        tm_putstring(string);
+
+                        switch (@typeInfo(arr.child)) {
+                            .Array => |elem| {
+                                if (elem.child == u8) {
+                                    tm_putstring(value);
+                                }
+                            },
+                            else => {
+                                tm_putstring(@intFromPtr(value));
+                            },
+                        }
+                    },
+                    else => |_type| {
+                        @compileLog("invalid type", _type);
+                        @compileError("format string in tm_printf() failed.");
+                    },
+                }
+            }
         }
-    } else {
-        tm_putstring(string);
     }
-    tm_putstring("\r\n");
-    // }
 }
 
-// fn format(string: []const u8, args: anytype) []const u8 {
-//     const ArgsType = @TypeOf(args);
-//     const args_type_info = @typeInfo(ArgsType);
-//     if (args_type_info != .Struct) {
-//         @compileError("expected tuple or struct argument, found " ++ @typeName(ArgsType));
-//     }
-//     //argsを適宜取り出すやつの予定
-//     comptime var i = 0;
-//     // arg_list: for (args) |arg| {
-//     inline while (i < string.len) {
-//         const start_index = i;
-//
-//         inline while (i < string.len) : (i += 1) {
-//             switch (string[i]) {
-//                 '{', '}' => break,
-//                 else => {},
-//             }
-//         }
-//
-//         comptime var end_index = i;
-//
-//         if (start_index != end_index) {
-//             tm_putstring(string[start_index..end_index]);
-//         }
-//
-//         i += 1; // skip {
-//
-//         const fmt_start = i;
-//         inline while (i < string.len and string[i] != '}') : (i += 1) {
-//             asm volatile ("nop");
-//         }
-//         const fmt_end = i;
-//
-//         if (i >= string.len) @compileError("missing closing }");
-//
-//         i += 1; // skip }
-//
-//         if (string[i] == '{') {
-//             switch (string[i + 1]) {
-//                 '}' => {
-//                     i += 1; // no specifier
-//                     break;
-//                 },
-//                 'd' => fmtDec(arg),
-//                 'x' => fmtHex(arg),
-//                 's' => arg,
-//                 else => unreachable,
-//             }
-//             for (fmt_str, 0..) |value, j| {
-//                 fmt[i + j] = value;
-//             }
-//             i += fmt_str.len;
-//             i += 2;
-//             continue :arg_list;
-//         }
-//         fmt[i] = string[i];
-//         i += 1;
-//     }
-//     // }
-// }
 pub fn intPrint(string: []const u8, decimal: usize) void {
     if (comptime dbg) {
         serial.puts(string);
@@ -131,7 +79,6 @@ pub fn intPrint(string: []const u8, decimal: usize) void {
         }
         for (buf) |value| {
             if (value > 10) {
-                // serial.print(">10");
                 continue;
             }
             switch (value) {
@@ -195,36 +142,36 @@ pub fn hexPrint(string: []const u8, decimal: usize) void {
 fn fmtDec(decimal: usize) []u8 {
     if (comptime dbg) {
         var vdata = decimal;
-        var buf: [10]usize = undefined;
+        var buf: [10]?u8 = [_]?u8{null} ** 10;
         var str: [10]u8 = undefined;
         for (0..9) |i| {
-            buf[9 - i] = vdata % 10;
+            buf[i] = @intCast(vdata % 10);
             vdata /= 10;
             if (vdata == 0)
                 break;
         }
-        // std.debug.print("a: {any}", .{a});
         for (buf, 0..) |value, i| {
-            // std.debug.print("value: {}", .{value});
-            if (value > 10) {
-                continue;
-            }
-            switch (value) {
-                0 => str[i] = '0',
-                1 => str[i] = '1',
-                2 => str[i] = '2',
-                3 => str[i] = '3',
-                4 => str[i] = '4',
-                5 => str[i] = '5',
-                6 => str[i] = '6',
-                7 => str[i] = '7',
-                8 => str[i] = '8',
-                9 => str[i] = '9',
-                else => unreachable,
+            if (value) |num| {
+                switch (num) {
+                    0 => str[9 - i] = '0',
+                    1 => str[9 - i] = '1',
+                    2 => str[9 - i] = '2',
+                    3 => str[9 - i] = '3',
+                    4 => str[9 - i] = '4',
+                    5 => str[9 - i] = '5',
+                    6 => str[9 - i] = '6',
+                    7 => str[9 - i] = '7',
+                    8 => str[9 - i] = '8',
+                    9 => str[9 - i] = '9',
+                    else => unreachable,
+                }
+            } else {
+                break;
             }
         }
 
-        return str[0..9];
+        tm_putstring(&str);
+        return str[0..];
     }
 }
 
@@ -280,3 +227,64 @@ pub fn tm_eprintf(string: []const u8, args: anytype) void {
         }
     }
 }
+
+// fn format(string: []const u8, args: anytype) []const u8 {
+//     const ArgsType = @TypeOf(args);
+//     const args_type_info = @typeInfo(ArgsType);
+//     if (args_type_info != .Struct) {
+//         @compileError("expected tuple or struct argument, found " ++ @typeName(ArgsType));
+//     }
+//     //argsを適宜取り出すやつの予定
+//     comptime var i = 0;
+//     // arg_list: for (args) |arg| {
+//     inline while (i < string.len) {
+//         const start_index = i;
+//
+//         inline while (i < string.len) : (i += 1) {
+//             switch (string[i]) {
+//                 '{', '}' => break,
+//                 else => {},
+//             }
+//         }
+//
+//         comptime var end_index = i;
+//
+//         if (start_index != end_index) {
+//             tm_putstring(string[start_index..end_index]);
+//         }
+//
+//         i += 1; // skip {
+//
+//         const fmt_start = i;
+//         inline while (i < string.len and string[i] != '}') : (i += 1) {
+//             asm volatile ("nop");
+//         }
+//         const fmt_end = i;
+//
+//         if (i >= string.len) @compileError("missing closing }");
+//
+//         i += 1; // skip }
+//
+//         if (string[i] == '{') {
+//             switch (string[i + 1]) {
+//                 '}' => {
+//                     i += 1; // no specifier
+//                     break;
+//                 },
+//                 'd' => fmtDec(arg),
+//                 'x' => fmtHex(arg),
+//                 's' => arg,
+//                 else => unreachable,
+//             }
+//             for (fmt_str, 0..) |value, j| {
+//                 fmt[i + j] = value;
+//             }
+//             i += fmt_str.len;
+//             i += 2;
+//             continue :arg_list;
+//         }
+//         fmt[i] = string[i];
+//         i += 1;
+//     }
+//     // }
+// }
