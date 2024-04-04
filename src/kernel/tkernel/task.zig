@@ -183,9 +183,9 @@ pub inline fn knl_reschedule() void {
 
 // * TCB Initialization
 pub fn knl_task_initialize() TkError!void {
-    tm_printf("\x1b[32m<>knl_task_initialize() start.\x1b[0m", .{});
-    defer tm_printf("knl_task_initialize() end", .{});
-    errdefer libtm.tm_eprintf("knl_task_initialize() failed", .{});
+    tm_printf("[start] {}()", .{@src().fn_name});
+    defer tm_printf("[end] {}()", .{@src().fn_name});
+    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
     // Get system information */
     if (knldef.NUM_TSKID < 1) {
         return TkError.SystemError;
@@ -217,8 +217,8 @@ pub fn knl_task_initialize() TkError!void {
 
 // * Prepare task execution.
 pub fn knl_make_dormant(tcb: *TCB) void {
-    tm_printf("knl_make_dormant start", .{});
-    defer tm_printf("knl_make_dormant end", .{});
+    tm_printf("[start] {}()", .{@src().fn_name});
+    defer tm_printf("[end] {}()", .{@src().fn_name});
 
     // Initialize variables which should be reset at DORMANT state */
     tcb.state = TSTAT.DORMANT;
@@ -262,7 +262,7 @@ pub fn knl_make_non_ready(tcb: *TCB) void {
     if (knlink.knl_schedtsk.? == tcb) {
         tm_printf("non ready!", .{});
         knlink.knl_schedtsk = ready_queue.knl_ready_queue.top();
-        tm_printf("tskid", .{knlink.knl_schedtsk.?.tskid});
+        tm_printf("tskid: {}", .{knlink.knl_schedtsk.?.tskid});
     }
 }
 

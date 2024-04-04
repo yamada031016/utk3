@@ -14,11 +14,10 @@ const in_indp = cpu_status.in_indp;
 const knldef = @import("libsys").knldef;
 const serial = @import("devices").serial;
 const libtm = @import("libtm");
-const tm_printf = libtm.tm_printf;
 
 // if (comptime config.CHK_ID) {
 pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
-    errdefer libtm.tm_eprintf("CHECK_TSKID() failed.", .{});
+    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
 
     if (!in_indp() and (tskid == syscall.TSK_SELF)) {
         return TkError.IncorrectObjectState;
@@ -28,7 +27,7 @@ pub inline fn CHECK_TSKID(tskid: ID) TkError!void {
 }
 
 pub inline fn CHECK_TSKID_SELF(tskid: ID) TkError!void {
-    errdefer libtm.tm_eprintf("CHECK_TSKID_SELF() failed.", .{});
+    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
     if (!((!in_indp() and (tskid) == syscall.TSK_SELF) or knldef.CHK_TSKID(tskid))) {
         return TkError.IncorrectIdNumber;
     }

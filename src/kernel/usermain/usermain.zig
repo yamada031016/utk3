@@ -29,11 +29,8 @@ fn test_task() void {
         .bufptr = @constCast(&hoge2),
     };
     _ = test_ctsk2;
-    // libtm.intPrint("usermain tskid test()", knlink.rdy_que.knl_ready_queue.tskque[9].?.tskid);
     //
     // if (tskmng.tk_cre_tsk(&test_ctsk2)) |tskid| {
-    //     libtm.intPrint("top pri test()", knlink.rdy_que.knl_ready_queue.top_priority);
-    //     libtm.intPrint("tskid:", tskid);
     //     if (tskmng.tk_sta_tsk(tskid, 0)) {
     //         print("success.");
     //         knlink.sysdepend.core.cpu_cntl.knl_dispatch();
@@ -50,9 +47,6 @@ fn test_task() void {
 
 var hoge: [STKSZ]usize = [_]usize{0} ** STKSZ;
 
-// extern const __data_start: usize;
-// extern const __rom_end: usize;
-// extern const __end: usize;
 pub fn usermain() i32 {
     print("\x1b[35m");
     print("usermain!");
@@ -68,7 +62,6 @@ pub fn usermain() i32 {
     };
 
     if (tskmng.tk_cre_tsk(&test_ctsk)) |tskid| {
-        libtm.intPrint("tskid:", tskid);
         if (tskmng.tk_sta_tsk(tskid, 0)) {
             print("success.");
         } else |err| {
@@ -79,6 +72,5 @@ pub fn usermain() i32 {
     }
 
     print("hogehoge~~");
-    // while (true) { asm volatile ("nop"); }
     return 0;
 }

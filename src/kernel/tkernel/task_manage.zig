@@ -25,9 +25,9 @@ const tm_printf = libtm.tm_printf;
 
 // * Create task
 pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
-    tm_printf("tk_cre_tsk start.", .{});
-    defer tm_printf("tk_cre_tsk end.", .{});
-    errdefer libtm.tm_eprintf("tk_cre_tsk failed.", .{});
+    tm_printf("[start] {}()", .{@src().fn_name});
+    defer tm_printf("[end] {}()", .{@src().fn_name});
+    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
     // Valid value of task attribute */
     var VALID_TSKATR: ATR = if (comptime config.CHK_RSATR) syscall.TA_HLNG | syscall.TA_RNG3 | syscall.TA_USERBUF | syscall.TA_COPS else undefined;
     if (comptime (config.CHK_RSATR and config.USE_OBJECT_NAME)) {
@@ -151,9 +151,9 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 
 // Start task
 pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
-    tm_printf("tk_sta_tsk start.", .{});
-    defer tm_printf("tk_sta_tsk end.", .{});
-    errdefer libtm.tm_eprintf("tk_sta_tsk failed.", .{});
+    tm_printf("[start] {}()", .{@src().fn_name});
+    defer tm_printf("[end] {}()", .{@src().fn_name});
+    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
 
     check.CHECK_TSKID(tskid) catch |err| {
         return err;
@@ -242,7 +242,7 @@ pub fn tk_ext_tsk() void {
         knl_ter_tsk(current_task);
         task.knl_make_dormant(current_task);
     } else {
-        libtm.tm_eprintf("current task is null", .{});
+        libtm.tm_printf("current task is null", .{});
     }
 
     cpu_ctrl.knl_force_dispatch();

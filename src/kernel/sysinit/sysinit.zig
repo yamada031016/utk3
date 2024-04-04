@@ -15,16 +15,15 @@ const cpu_cntl = knlink.sysdepend.core.cpu_cntl;
 const cpu_status = knlink.sysdepend.core.cpu_status;
 const TkError = @import("libtk").errno.TkError;
 const interrupt = knlink.sysdepend.interrupt;
+const libtm = @import("libtm");
 
 // Start micro T-Kernel
 //    Initialize sequence before micro T-Kernel start.
 //    Perform preparation necessary to start micro T-Kernel.
 pub fn main() !noreturn {
     print("\x1b[32m<>SYSINIT main function.\x1b[0m");
-    errdefer |err| {
-        serial.eprint(@errorName(err));
-        serial.eprint("sysinit failed.");
-    }
+    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
+
     cpu_status.DISABLE_INTERRUPT();
 
     if (comptime config.USE_TMONITOR) {
@@ -42,20 +41,13 @@ pub fn main() !noreturn {
     }
 
     // Initialize Device before micro T-Kernel starts
-    devinit.knl_init_device() catch |err| {
-        serial.eprint("knl_init_device() failed.");
-        return err;
-    };
+    try devinit.knl_init_device();
 
     // Interrupt initialize
-    interrupt.knl_init_interrupt() catch |err| {
-        serial.eprint("knl_init_interrupt() failed.");
-        return err;
-    };
+    try interrupt.knl_init_interrupt();
 
     // Initialize Kernel-objects
     tkinit.knl_init_object() catch |err| {
-        serial.eprint("kernel object initialize");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
@@ -64,14 +56,13 @@ pub fn main() !noreturn {
 
     // Start System Timer
     timer.knl_timer_startup() catch |err| {
-        serial.eprint("System timer startup");
         if (config.USE_SHUTDOWN) {
             hw_setting.knl_shutdown_hw(); // Hardware-dependent Finalization
         }
         return err;
     };
 
-    @import("libtm").tm_printf("sysinit time:", .{@import("libsys").getSystemTime()});
+    libtm.tm_printf("sysinit time: {}", .{@import("libsys").getSystemTime()});
     // Create & start initial task
     if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
         if (tskmng.tk_sta_tsk(tskid, 0)) {
@@ -79,11 +70,13 @@ pub fn main() !noreturn {
             cpu_cntl.knl_force_dispatch();
             unreachable;
         } else |err| {
-            serial.eprint("Initial Task cannot start");
+            // serial.eprint("Initial Task cannot start");
+            // libtm.tm_eprintf(@src().fn_name, @src().file, err);
             return err;
         }
     } else |err| {
-        serial.eprint("Initial Task cannot creat");
+        // serial.eprint("Initial Task cannot creat");
+        // libtm.tm_eprintf(@src().fn_name, @src().file, err);
         return err;
     }
 

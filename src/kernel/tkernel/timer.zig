@@ -92,6 +92,7 @@ inline fn knl_timer_delete(event: *TMEB) void {
 
 // * Start system timer */
 pub fn knl_timer_startup() !void {
+    errdefer |err| @import("libtm").tm_eprintf(@src(), err);
     knl_real_time_ofs = 0;
     knl_current_time = knl_real_time_ofs;
     // knl_timer_queue already initialized.

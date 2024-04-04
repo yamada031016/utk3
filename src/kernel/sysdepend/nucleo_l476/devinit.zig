@@ -3,6 +3,7 @@ const serial = @import("devices").serial;
 const TkError = @import("libtk").errno.TkError;
 
 pub fn knl_init_device() !void {
+    // errdefer |err| @import("libtm").tm_eprintf(@src().fn_name, @src().file, err);
     return;
 }
 

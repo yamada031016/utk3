@@ -7,10 +7,8 @@ const TkError = libtk.errno.TkError;
 
 // * Each kernel-object initialization */
 pub fn knl_init_object() TkError!void {
-    task.knl_task_initialize() catch |err| {
-        @import("devices").serial.print("tkinit error!");
-        return err;
-    };
+    errdefer |err| @import("libtm").tm_eprintf(@src().fn_name, @src().file, err);
+    try task.knl_task_initialize();
 
     // if (comptime config.USE_SEMAPHORE) {
     //     knl_semaphore_initialize() catch |err| {

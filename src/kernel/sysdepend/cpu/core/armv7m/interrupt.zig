@@ -62,6 +62,7 @@ pub fn knl_return_inthdr() void {
 
 //Interrupt initialize
 pub fn knl_init_interrupt() TkError!void {
+    // errdefer |err| @import("libtm").tm_eprintf(@src().fn_name, @src().file, err);
     // Register exception handler used on OS */
     return;
 }
