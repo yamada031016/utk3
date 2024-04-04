@@ -37,7 +37,7 @@ pub const Scope = enum {
 
 pub const default_level: Level = switch (builtin.mode) {
     .Debug => .debug,
-    .ReleaseSafe => .warning,
+    .ReleaseSafe => .warn,
     .ReleaseSmall, .ReleaseFast => .err,
 };
 
