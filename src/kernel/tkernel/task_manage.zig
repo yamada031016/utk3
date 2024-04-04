@@ -21,13 +21,12 @@ const config = @import("config");
 const ATR = libtk.typedef.ATR;
 const PRI = libtk.typedef.PRI;
 const libtm = @import("libtm");
-const tm_printf = libtm.tm_printf;
 
 // * Create task
 pub fn tk_cre_tsk(pk_ctsk: *const syscall.T_CTSK) TkError!usize {
-    tm_printf("[start] {}()", .{@src().fn_name});
-    defer tm_printf("[end] {}()", .{@src().fn_name});
-    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
+    libtm.log.TkLog(.debug, .api, "start {}()", .{@src().fn_name});
+    defer libtm.log.TkLog(.debug, .api, "end {}()", .{@src().fn_name});
+
     // Valid value of task attribute */
     var VALID_TSKATR: ATR = if (comptime config.CHK_RSATR) syscall.TA_HLNG | syscall.TA_RNG3 | syscall.TA_USERBUF | syscall.TA_COPS else undefined;
     if (comptime (config.CHK_RSATR and config.USE_OBJECT_NAME)) {
@@ -151,9 +150,8 @@ pub fn tk_del_tsk(tskid: u32) TkError!void {
 
 // Start task
 pub fn tk_sta_tsk(tskid: usize, stacd: usize) TkError!void {
-    tm_printf("[start] {}()", .{@src().fn_name});
-    defer tm_printf("[end] {}()", .{@src().fn_name});
-    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
+    libtm.log.TkLog(.debug, .api, "start {}()", .{@src().fn_name});
+    defer libtm.log.TkLog(.debug, .api, "end {}()", .{@src().fn_name});
 
     check.CHECK_TSKID(tskid) catch |err| {
         return err;
@@ -223,7 +221,6 @@ pub fn tk_ext_tsk() void {
     // Check context error */
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
-            tm_printf("tk_ext_tsk was called in the task independent", .{});
             while (true) {
                 asm volatile ("nop");
             }
@@ -232,7 +229,7 @@ pub fn tk_ext_tsk() void {
     }
     if (comptime config.CHK_CTX1) {
         if (cpu_status.in_ddsp()) {
-            tm_printf("tk_ext_tsk was called in the dispatch disabled", .{});
+            libtm.log.TkLog(.debug, .api, "{} was called in the dispatch disabled", .{@src().fn_name});
         }
     }
 
@@ -242,7 +239,7 @@ pub fn tk_ext_tsk() void {
         knl_ter_tsk(current_task);
         task.knl_make_dormant(current_task);
     } else {
-        libtm.tm_printf("current task is null", .{});
+        libtm.log.TkLog(.debug, .api, "current task is null", .{});
     }
 
     cpu_ctrl.knl_force_dispatch();
@@ -264,13 +261,13 @@ pub fn tk_exd_tsk() void {
     // Check context error */
     if (comptime config.CHK_CTX2) {
         if (cpu_status.in_indp()) {
-            tm_printf("tk_exd_tsk was called in the task independent", .{});
+            libtm.log.TkLog(.debug, .api, "{} was called in the task independent", .{@src().fn_name});
             return;
         }
     }
     if (comptime config.CHK_CTX1) {
         if (cpu_status.in_ddsp()) {
-            tm_printf("tk_exd_tsk was called in the dispatch disabled", .{});
+            libtm.log.TkLog(.debug, .api, "{} was called in the dispatch disabled", .{@src().fn_name});
         }
     }
 

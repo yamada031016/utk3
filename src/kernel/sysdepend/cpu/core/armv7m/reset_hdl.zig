@@ -10,7 +10,6 @@ const interrupt = knlink.sysdepend.interrupt;
 const serial = @import("devices").serial;
 const hexdump = serial.hexdump;
 const libtm = @import("libtm");
-const tm_printf = libtm.tm_printf;
 
 const builtin = @import("builtin");
 const dbg = builtin.mode == .Debug;
@@ -37,7 +36,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
         knlink.sysdepend.devinit.knl_start_device();
     }
     const a = @import("libtk").syslib.cpu.read(@intFromEnum(sysdef.TIM16.CNT));
-    tm_printf("timer at reset handler: {}", .{a});
+    libtm.log.TkLog(.info, .kernel, "timer at reset handler: {}", .{a});
 
     if (comptime !config.USE_STATIC_IVT) {
         // Load Vector Table from ROM to RAM
@@ -67,7 +66,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
         data_top = @ptrFromInt(@intFromPtr(data_top) + @sizeOf(usize));
         data_src = @ptrFromInt(@intFromPtr(data_src) + @sizeOf(usize));
     }
-    tm_printf("\x1b[32m[START] Reset_Handler!!!\x1b[0m", .{});
+    libtm.log.TkLog(.info, .kernel, "start Reset Handler", .{});
 
     // Initialize .bss
     // if (comptime config.USE_NOINIT) {
@@ -118,7 +117,7 @@ export fn Reset_Handler() callconv(.C) noreturn {
     sysinit.main() catch |err| {
         // errをごまかす苦肉の策
         switch (err) {
-            else => serial.eprint("Reset Handler failed."),
+            else => libtm.log.TkLog(.err, .kernel, "failed sysinit", .{}),
         }
     };
     unreachable;

@@ -7,8 +7,7 @@ const usermain = knlink.usermain.usermain;
 const TkError = @import("libtk").errno.TkError;
 const hw_setting = knlink.sysdepend.hw_setting;
 const syscall = @import("libtk").syscall;
-const serial = @import("devices").serial;
-const print = serial.print;
+const libtm = @import("libtm");
 
 const init_task_stack: [INITTASK_STKSZ / @sizeOf(isize)]isize = [_]isize{1} ** 256;
 
@@ -22,14 +21,12 @@ const INITTASK_STKSZ = 1 * 1024;
 
 pub fn init_task_main() TkError!void {
     var fin: i32 = 1;
-    print("inittask!");
+    libtm.log.TkLog(.info, .kernel, "inittask!", .{});
     // Start Sub-system & device driver
     if (start_system()) {
         if (comptime config.USE_SYSTEM_MESSAGE and config.USE_TMONITOR) {
-            // print("\n\nmicroT-Kernel Version %x.%02x\n\n", VER_MAJOR, VER_MINOR);
-            print("\r\nmicroT-Kernel Version 3.0\r\n");
+            libtm.log.TkLog(.info, .kernel, "microT-Kernel Version 3.0\r\n", .{});
         }
-        print("\r\nmicroT-Kernel Version 3.0\r\n");
 
         // if (comptime USE_USERINIT) {
         //     // Perform user defined initialization sequence
@@ -43,7 +40,7 @@ pub fn init_task_main() TkError!void {
         //     (*(MAIN_FP)RI_USERINIT)(-1, NULL);
         // }
     } else |err| {
-        print("!ERROR! Init Task start"); // Start message
+        libtm.log.TkLog(.err, .kernel, "failed to start inittask", .{});
         return err;
     }
     shutdown_system(fin); // Never return
@@ -92,7 +89,7 @@ fn shutdown_system(fin: i32) void {
 
         // Shutdown message output
         if (fin >= 0) {
-            print("\r\n<< SYSTEM SHUTDOWN >>");
+            libtm.log.TkLog(.info, .kernel, "<< SYSTEM SHUTDOWN >>", .{});
         } else {
             // Re-start sequence (platform dependent)
             hw_setting.knl_restart_hw(fin);
@@ -101,7 +98,7 @@ fn shutdown_system(fin: i32) void {
         knlink.sysinit.knl_tkernel_exit(); // Stop system
     } else {
         cpu_status.DISABLE_INTERRUPT();
-        print("\r\nmicroT-Kernel shutdown...\r\n");
+        libtm.log.TkLog(.info, .kernel, "microT-Kernel shutdown...\r\n", .{});
         while (true) {
             asm volatile ("nop");
         }

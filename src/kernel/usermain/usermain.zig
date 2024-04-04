@@ -16,9 +16,7 @@ fn dummy_task() void {
 
 var hoge2: [STKSZ]usize = [_]usize{0} ** STKSZ;
 fn test_task() void {
-    print("\x1b[35m");
-    print("test_task()!");
-    print("\x1b[0m");
+    libtm.log.TkLog(.info, .user, "{}()", .{@src().fn_name});
 
     const test_ctsk2 = syscall.T_CTSK{
         .exinf = null,
@@ -48,9 +46,7 @@ fn test_task() void {
 var hoge: [STKSZ]usize = [_]usize{0} ** STKSZ;
 
 pub fn usermain() i32 {
-    print("\x1b[35m");
-    print("usermain!");
-    print("\x1b[0m");
+    libtm.log.TkLog(.info, .user, "{}()", .{@src().fn_name});
 
     const test_ctsk = syscall.T_CTSK{
         .exinf = null,
@@ -62,15 +58,13 @@ pub fn usermain() i32 {
     };
 
     if (tskmng.tk_cre_tsk(&test_ctsk)) |tskid| {
-        if (tskmng.tk_sta_tsk(tskid, 0)) {
-            print("success.");
-        } else |err| {
+        if (tskmng.tk_sta_tsk(tskid, 0)) {} else |err| {
             print(@errorName(err));
         }
     } else |err| {
         print(@errorName(err));
     }
 
-    print("hogehoge~~");
+    libtm.log.TkLog(.info, .user, "Finish!!!!!!!!!", .{});
     return 0;
 }

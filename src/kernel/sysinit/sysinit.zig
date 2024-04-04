@@ -21,7 +21,7 @@ const libtm = @import("libtm");
 //    Initialize sequence before micro T-Kernel start.
 //    Perform preparation necessary to start micro T-Kernel.
 pub fn main() !noreturn {
-    print("\x1b[32m<>SYSINIT main function.\x1b[0m");
+    libtm.log.TkLog(.info, .kernel, "start SYSINIT main function.", .{});
     // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
 
     cpu_status.DISABLE_INTERRUPT();
@@ -62,7 +62,7 @@ pub fn main() !noreturn {
         return err;
     };
 
-    libtm.tm_printf("sysinit time: {}", .{@import("libsys").getSystemTime()});
+    libtm.log.TkLog(.info, .kernel, "sysinit time: {}", .{@import("libsys").getSystemTime()});
     // Create & start initial task
     if (tskmng.tk_cre_tsk(&inittask.knl_init_ctsk)) |tskid| {
         if (tskmng.tk_sta_tsk(tskid, 0)) {

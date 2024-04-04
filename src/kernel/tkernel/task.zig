@@ -19,7 +19,6 @@ const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
 const PRI = libtk.typedef.PRI;
 const libtm = @import("libtm");
-const tm_printf = libtm.tm_printf;
 
 pub const TSTAT = enum(u8) {
     NONEXIST = 0, // Unregistered state */
@@ -183,9 +182,10 @@ pub inline fn knl_reschedule() void {
 
 // * TCB Initialization
 pub fn knl_task_initialize() TkError!void {
-    tm_printf("[start] {}()", .{@src().fn_name});
-    defer tm_printf("[end] {}()", .{@src().fn_name});
-    // errdefer |err| libtm.tm_eprintf(@src().fn_name, @src().file, err);
+    libtm.log.TkLog(.debug, .api, "start {}()", .{@src().fn_name});
+    defer libtm.log.TkLog(.debug, .api, "end {}()", .{@src().fn_name});
+    errdefer libtm.log.TkLog(.err, .api, "failed {}()", .{@src().fn_name});
+
     // Get system information */
     if (knldef.NUM_TSKID < 1) {
         return TkError.SystemError;
@@ -217,8 +217,8 @@ pub fn knl_task_initialize() TkError!void {
 
 // * Prepare task execution.
 pub fn knl_make_dormant(tcb: *TCB) void {
-    tm_printf("[start] {}()", .{@src().fn_name});
-    defer tm_printf("[end] {}()", .{@src().fn_name});
+    libtm.log.TkLog(.debug, .api, "start {}()", .{@src().fn_name});
+    defer libtm.log.TkLog(.debug, .api, "end {}()", .{@src().fn_name});
 
     // Initialize variables which should be reset at DORMANT state */
     tcb.state = TSTAT.DORMANT;
@@ -260,9 +260,8 @@ pub fn knl_make_ready(tcb: *TCB) void {
 pub fn knl_make_non_ready(tcb: *TCB) void {
     ready_queue.knl_ready_queue.delete(tcb);
     if (knlink.knl_schedtsk.? == tcb) {
-        tm_printf("non ready!", .{});
+        libtm.log.TkLog(.debug, .api, "non ready!", .{});
         knlink.knl_schedtsk = ready_queue.knl_ready_queue.top();
-        tm_printf("tskid: {}", .{knlink.knl_schedtsk.?.tskid});
     }
 }
 
