@@ -53,7 +53,7 @@ pub inline fn CHK_TSKID(id: ID) bool {
 pub inline fn INDEX_TSK(id: ID) usize {
     return id - MIN_TSKID;
 }
-pub inline fn ID_TSK(index: usize) usize {
+pub inline fn ID_TSK(index: ID) ID {
     return index + MIN_TSKID;
 }
 

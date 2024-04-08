@@ -6,16 +6,16 @@ const syscall = libtk.syscall;
 const libtm = @import("libtm");
 
 const STKSZ = 1024;
-fn dummy_task() void {
+fn dummy_task() !void {
     print("\x1b[35m");
     print("dummy_task()!");
     print("\x1b[0m");
-    knlink.task_manage.tk_exd_tsk();
+    try knlink.task_manage.tk_exd_tsk();
     print("end");
 }
 
 var hoge2: [STKSZ]usize = [_]usize{0} ** STKSZ;
-fn test_task() void {
+fn test_task() !void {
     libtm.log.TkLog(.info, .user, "{}()", .{@src().fn_name});
 
     const test_ctsk2 = syscall.T_CTSK{
@@ -39,7 +39,10 @@ fn test_task() void {
     //     print(@errorName(err));
     // }
 
-    knlink.task_manage.tk_exd_tsk();
+    knlink.task_manage.tk_exd_tsk() catch |err| {
+        libtm.log.TkLog(.err, .user, "{}", .{@errorName(err)});
+        libtm.log.TkLog(.debug, .user, "{}() failed ({} {},{})", .{ @src().fn_name, @src().file, @src().line, @src().column });
+    };
     unreachable;
 }
 
@@ -58,7 +61,11 @@ pub fn usermain() i32 {
     };
 
     if (tskmng.tk_cre_tsk(&test_ctsk)) |tskid| {
-        if (tskmng.tk_sta_tsk(tskid, 0)) {} else |err| {
+        if (tskmng.tk_sta_tsk(tskid, 0)) {
+            const tsk = knlink.task.get_tcb(tskid);
+            const Alive = knlink.task.knl_task_alive(tsk.state);
+            libtm.log.TkLog(.debug, .user, "task alive is {}", .{Alive});
+        } else |err| {
             print(@errorName(err));
         }
     } else |err| {

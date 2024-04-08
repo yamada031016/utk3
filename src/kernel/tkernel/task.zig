@@ -1,23 +1,23 @@
-// *	Task Control
-// * Internal expression of task state
-// *	Can check with 'state & TS_WAIT' whether the task is in the wait state.
-// *	Can check with 'state & TS_SUSPEND' whether the task is in the forced
-// *	wait state.
+// Task Control
+// Internal expression of task state
+// Can check with 'state & TS_WAIT' whether the task is in the wait state.
+// Can check with 'state & TS_SUSPEND' whether the task is in the forced
+// wait state.
 const config = @import("config");
 const knlink = @import("knlink");
 const ready_queue = knlink.rdy_que;
 const cpu_task = knlink.sysdepend.core.cpu_task;
+const cpu_status = knlink.sysdepend.core.cpu_status;
 const TCB = knlink.TCB;
 const libsys = @import("libsys");
 const knldef = libsys.knldef;
 const libtk = @import("libtk");
-// const syslib = libtk.syslib;
 const syscall = libtk.syscall;
-// const tkernel = libtk.tkernel;
 const TkError = libtk.errno.TkError;
 const queue = libsys.queue;
 const TkQueue = queue.TkQueue;
 const PRI = libtk.typedef.PRI;
+const ID = libtk.typedef.ID;
 const libtm = @import("libtm");
 
 pub const TSTAT = enum(u8) {
@@ -33,14 +33,25 @@ pub export var knl_dispatch_disabled: bool = false;
 
 // * If the task is alive ( except NON-EXISTENT,DORMANT ), return TRUE.
 pub inline fn knl_task_alive(state: TSTAT) bool {
-    return (state & (TSTAT.READY | TSTAT.WAIT | TSTAT.SUSPEND)) != 0;
+    return (@intFromEnum(state) & (@intFromEnum(TSTAT.READY) | @intFromEnum(TSTAT.WAIT) | @intFromEnum(TSTAT.SUSPEND))) != 0;
+}
+
+test "isAlive" {
+    const expect = @import("std").testing.expect;
+
+    expect(!knl_task_alive(.NONEXIST));
+    expect(knl_task_alive(.READY));
+    expect(knl_task_alive(.WAIT));
+    expect(knl_task_alive(.SUSPEND));
+    expect(knl_task_alive(.WAITSUS));
+    expect(!knl_task_alive(.DORMANT));
 }
 
 // * Task priority internal/external expression conversion macro
 pub inline fn int_priority(x: PRI) PRI {
     return x - knldef.MIN_TSKPRI;
 }
-pub inline fn ext_tskpri(x: PRI) isize {
+pub inline fn ext_tskpri(x: PRI) PRI {
     return x + knldef.MIN_TSKPRI;
 }
 
@@ -79,36 +90,6 @@ fn knl_tcb_table_init() void {
         break :tcb_table tmp;
     };
 }
-// pub var knl_tcb_table: [knldef.NUM_TSKID]*TCB = tcb_table: {
-//     var tmp: [knldef.NUM_TSKID]*TCB = undefined;
-//     for (0..knldef.NUM_TSKID) |i| {
-//         var dummy: *TCB = undefined;
-//         var dummy_stack: *knlink.sysdepend.core.cpu_task.SStackFrame = undefined;
-//         _tcb = TCB{
-//             .tskque = @constCast(&TCB.Node{ .next = dummy, .prev = null }),
-//             // .tskque = null,
-//             .tskid = i + 1,
-//             .task = @as(*usize, @ptrCast(&dummy)),
-//             .exinf = null,
-//             .tskatr = 999,
-//             .tskctxb = knlink.sysdepend.core.CTXB{ .ssp = @ptrCast(&dummy_stack) },
-//             .sstksz = 999,
-//             .isysmode = 127,
-//             .sysmode = 999,
-//             .ipriority = 32,
-//             .bpriority = 32,
-//             .priority = 32, //min Pri
-//             .state = TSTAT.TS_DORMANT,
-//             .wid = 999,
-//             .wupcnt = 999,
-//             .suscnt = 999,
-//             .wercd = TkError.SystemError,
-//             .isstack = @ptrCast(&dummy_stack),
-//         };
-//         tmp[i] = &_tcb;
-//     }
-//     break :tcb_table tmp;
-// };
 
 pub var knl_free_tcb = TkQueue(*TCB).init();
 
@@ -117,7 +98,7 @@ pub inline fn get_tcb(id: usize) *TCB {
     return knl_tcb_table[knldef.INDEX_TSK(id)];
 }
 
-pub inline fn get_tcb_self(id: isize) TCB {
+pub inline fn get_tcb_self(id: usize) TCB {
     if (id == syscall.TSK_SELF) {
         return knlink.knl_ctxtsk.?.*;
     } else {
@@ -195,23 +176,16 @@ pub fn knl_task_initialize() TkError!void {
     knlink.knl_ctxtsk = null;
     knlink.knl_schedtsk = null;
     knl_tcb_table_init();
-    // knl_ready_queueはinit済み
-    // ready_queue.RdyQueue().init();
     knl_dispatch_disabled = knlink.DDS_ENABLE;
 
     // Register all TCBs onto FreeQue */
     for (knl_tcb_table, 0..32) |tcb, i| {
         tcb.tskid = knldef.ID_TSK(i);
-        // if (i == 0) {
-        // serial.hexdump("tcb addr", @intFromPtr(tcb));
-        // }
         tcb.state = TSTAT.NONEXIST;
-        // if (comptime USE_LEGACY_API and USE_RENDEZVOUS) {
-        //     tcb.wrdvno = tskid;
-        // }
-        // if (tcb.tskque != null) {
+        if (comptime config.USE_LEGACY_API and config.USE_RENDEZVOUS) {
+            tcb.wrdvno = knldef.ID_TSK(i);
+        }
         knl_free_tcb.enqueue(tcb);
-        // }
     }
 }
 
@@ -229,10 +203,10 @@ pub fn knl_make_dormant(tcb: *TCB) void {
     tcb.suscnt = 0;
     tcb.klockwait = false;
     tcb.klocked = false;
-    // if (comptime config.USE_DBGSPT and defined(USE_FUNC_TD_INF_TSK)) {
-    //     tcb.stime = 0;
-    //     tcb.utime = 0;
-    // }
+    if (comptime config.USE_DBGSPT and @hasDecl(config, "USE_FUNC_TD_INF_TSK")) {
+        tcb.stime = 0;
+        tcb.utime = 0;
+    }
     tcb.wercd = undefined;
 
     if (comptime config.func.USE_MUTEX) {
@@ -260,7 +234,6 @@ pub fn knl_make_ready(tcb: *TCB) void {
 pub fn knl_make_non_ready(tcb: *TCB) void {
     ready_queue.knl_ready_queue.delete(tcb);
     if (knlink.knl_schedtsk.? == tcb) {
-        libtm.log.TkLog(.debug, .api, "non ready!", .{});
         knlink.knl_schedtsk = ready_queue.knl_ready_queue.top();
     }
 }
@@ -287,7 +260,7 @@ pub fn knl_change_task_priority(tcb: *TCB, priority: PRI) void {
         // winfo実装してから
         // if ((tcb.state & TSTAT.TS_WAIT) != 0 and tcb.wspec.chg_pri_hook) {
         //     // function pointer table ?
-        //     (*tcb.wspec.chg_pri_hook)(tcb, oldpri);
+        // (*tcb.wspec.chg_pri_hook)(tcb, oldpri);
         // }
     }
 }
@@ -307,30 +280,29 @@ pub fn knl_rotate_ready_queue_run() void {
 }
 
 // *	Debug support function
-// if (comptime USE_DBGSPT) {
-//
-// #ifdef USE_FUNC_TD_RDY_QUE
-// //
-//  * Refer ready queue
-//  */
-// SYSCALL INT td_rdy_que( PRI pri, ID list[], INT nent )
-// {
-// 	QUEUE	*q, *tskque;
-// 	INT	n = 0;
-//
-// 	CHECK_PRI(pri);
-//
-// 	BEGIN_DISABLE_INTERRUPT;
-// 	tskque = &knl_ready_queue.tskque[int_priority(pri)];
-// 	for ( q = tskque.next; q != tskque; q = q.next ) {
-// 		if ( n++ < nent ) {
-// 			*(list++) = ((TCB*)q).tskid;
-// 		}
-// 	}
-// 	END_DISABLE_INTERRUPT;
-//
-// 	return n;
-// }
-// #endif // USE_FUNC_TD_RDY_QUE */
-//
-// }
+// * Refer ready queue
+// 仕様書通りのAPI
+// pub fn td_rdy_que(pri: PRI, list: []ID, nent: isize) isize {
+// Zig言語らしい安全なAPI
+//  - listを変更しない
+//  - nentやlistのサイズを必要としない. list.lenで十分
+pub fn td_rdy_que(pri: PRI) []ID {
+    if (comptime config.USE_DBGSPT and config.func.USE_FUNC_TD_RDY_QUE) {
+        var ready_tskid_list: [knldef.NUM_TSKID]ID = undefined;
+
+        knlink.check.CHECK_PRI(pri);
+        {
+            cpu_status.BEGIN_DISABLE_INTERRUPT();
+            defer cpu_status.END_DISABLE_INTERRUPT();
+
+            const tskque = ready_queue.knl_ready_queue.tskque[int_priority(pri)];
+            for (tskque, 0..) |elem, i| {
+                if (elem) |tsk| {
+                    ready_tskid_list[i] = tsk.tskid;
+                }
+            }
+        }
+
+        return &ready_tskid_list;
+    }
+}

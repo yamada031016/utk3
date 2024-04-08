@@ -72,12 +72,9 @@ pub const TCB = struct {
 pub export var knl_ctxtsk: ?*TCB = undefined;
 pub export var knl_schedtsk: ?*TCB = undefined;
 
-// pub const DDS_ENABLE = 0;
 pub const DDS_ENABLE = false;
 pub const DDS_DISABLE_IMPLICIT = true; // set with implicit process */
-// pub const DDS_DISABLE = 2; // set by tk_dis_dsp() */
 pub const DDS_DISABLE = true; // set by tk_dis_dsp() */
-// pub export var knl_dispatch_disabled: bool = false;
 
 pub const CHAR_BIT = 8;
 pub const SCHAR_MIN = -128;

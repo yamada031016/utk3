@@ -100,6 +100,9 @@ pub fn tm_vprintf(comptime string: []const u8, args: anytype) void {
                             },
                         }
                     },
+                    .Bool => {
+                        tm_putstring(if (value) "true" else "false");
+                    },
                     else => |_type| {
                         @compileLog("invalid type", _type);
                         @compileError("format string in tm_printf() failed.");

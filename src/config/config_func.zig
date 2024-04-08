@@ -17,7 +17,7 @@ pub const USE_MULTI_LOCK = false;
 // Task management
 pub const USE_FUNC_TK_DEL_TSK = false;
 pub const USE_FUNC_TK_EXT_TSK = false;
-pub const USE_FUNC_TK_EXD_TSK = false;
+pub const USE_FUNC_TK_EXD_TSK = true;
 pub const USE_FUNC_TK_TER_TSK = false;
 pub const USE_FUNC_TK_CHG_PRI = false;
 pub const USE_FUNC_TK_REL_WAI = false;
