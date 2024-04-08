@@ -41,7 +41,7 @@ pub fn RdyQueue() type {
             libtm.log.TkLog(.debug, .api, "start {}()", .{@src().fn_name});
             defer libtm.log.TkLog(.debug, .api, "end {}()", .{@src().fn_name});
 
-            libtm.log.TkLog(.debug, .api, "top pri: {}", .{this.top_priority});
+            libtm.log.TkLog(.debug, .api, "top pri: {}", .{this.getTopPriority()});
             return this.tskque[this.top_priority - 1].?;
         }
 
@@ -182,10 +182,10 @@ pub fn RdyQueue() type {
         fn calc_top_priority(this: *This, bitmap: PRI, pos: PRI) PRI {
             if (comptime knldef.NUM_TSKPRI <= INT_BITWIDTH) {
                 _ = this;
-                // because of pos is contant.
+                // because pos is contant.
                 var i = pos;
                 while (i < knldef.NUM_TSKPRI - 1) : (i += 1) {
-                    if (bitmap ^ @as(u32, 1) << @as(u5, @intCast(i)) == 0) {
+                    if ((bitmap >> @as(u5, @intCast(i)) & 1) != 0) {
                         return i;
                     }
                 } else {
@@ -194,8 +194,8 @@ pub fn RdyQueue() type {
             }
         }
 
-        // * Move the task, whose ready queue priority is 'priority', at head of
-        // * queue to the end of queue. Do nothing, if the queue is empty.
+        // Move the task, whose ready queue priority is 'priority', at head of
+        // queue to the end of queue. Do nothing, if the queue is empty.
         pub fn rotate(this: *This, priority: PRI) void {
             const tskque = &this.tskque[priority];
 
